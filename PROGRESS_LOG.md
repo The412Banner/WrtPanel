@@ -2,6 +2,28 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — Pages in parallel (feat/app + 8 feat/pages-* branches, in progress)
+
+**Why:** ~35 LuCI pages (~18k lines of view JS) remain; split by page group so they can be built in parallel.
+
+**Base:** feat/app f101edb5 (engine, shell, 3 example pages, unit tests, refreshable menu). Earlier CI: run 43810491817
+(44201f1d) compiled + built the release APK; only the signature check failed because apksigner skips v1 for
+minSdk 26 → check now uses `--min-sdk-version 21` and re-signs with apksigner if AGP left v1 out (3c4c3bf7).
+
+**Groups (one agent each, own worktree + branch, CI per push; writes only on the test router, real router never):**
+- feat/pages-status — Overview (all includes), Routing (routes/routesj), Firewall (nftables/iptables), System/Kernel Log
+- feat/pages-graphs — Realtime Load / Bandwidth / Wireless / Connections, Channel Analysis
+- feat/pages-system — Administration (password, dropbear, sshkeys, uhttpd, repokeys), Startup, Scheduled Tasks, Mount Points, LEDs, Backup/Flash, Reboot
+- feat/pages-software — Software (package manager: install/remove/upgrade/upload/feeds, menu refresh for plugins), Network Shares (ksmbd)
+- feat/pages-interfaces — Interfaces / Devices / Global options + protocol handlers
+- feat/pages-wireless — Wireless (radios, networks, scan/join, security, stations)
+- feat/pages-firewall — Zones, Port Forwards, Traffic Rules, NAT Rules, IP Sets, Custom Rules
+- feat/pages-dhcpdns — DHCP, DNS, Diagnostics
+
+**Helper:** /root/work/wrtpanel-testrouter/ubus.py (read-only queries against the test router).
+
+**Next:** merge each branch into feat/app when its CI is green, full CI, stage the APK, ask the user before installing.
+
 ## 2026-11-16 — Project start: engine + app shell (feat/app, in progress)
 
 **Why:** the user asked for a native Jetpack Compose app that manages an OpenWrt router 1:1 like
