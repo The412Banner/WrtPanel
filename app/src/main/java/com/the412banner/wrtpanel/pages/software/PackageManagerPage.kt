@@ -97,6 +97,12 @@ private const val PAGE_SIZE = 100
 
 private class MountInfo(val size: Double, val free: Double)
 
+/** fs.exec_direct('/usr/libexec/package-manager-call', [ arg ]), parsed while it streams in. */
+private suspend fun downloadList(ctx: PageContext, arg: String): PkgList = withContext(Dispatchers.IO) {
+    val (resp, stream) = ctx.client.cgiStream("cgi-exec", mapOf("command" to "$PM_CALL $arg", "stderr" to "0"))
+    resp.use { PkgList().also { list -> stream.use { parsePackageData(it, list) } } }
+}
+
 /** System › Software — port of luci-app-package-manager view/package-manager.js. */
 @Composable
 fun PackageManagerPage(ctx: PageContext) {
@@ -128,19 +134,15 @@ fun PackageManagerPage(ctx: PageContext) {
         try {
             val (mounts, available, installed) = coroutineScope {
                 val mp = async { ctx.call("luci", "getMountPoints")["result"].arr ?: emptyList() }
-                val av = async { ctx.fs.execDirect(PM_CALL, listOf("list-available")) }
-                val inst = async { ctx.fs.execDirect(PM_CALL, listOf("list-installed")) }
+                val av = async { downloadList(ctx, "list-available") }
+                val inst = async { downloadList(ctx, "list-installed") }
                 Triple(mp.await(), av.await(), inst.await())
             }
             val m = mounts.firstOrNull { it["mount"].str == "/" || it["mount"].str == "/overlay" }
             mount = MountInfo(m["size"].double ?: 0.0, m["free"].double ?: 0.0)
-            db = withContext(Dispatchers.Default) {
-                val a = PkgList().also { parsePackageData(available, it) }
-                val i = PkgList().also { parsePackageData(installed, it) }
-                val langs = mutableListOf("en")
-                for (n in i.pkgs.keys) if (n.startsWith("luci-i18n-base-")) langs += n.substring(15)
-                PkgDb(a, i, langs)
-            }
+            val langs = mutableListOf("en")
+            for (n in installed.pkgs.keys) if (n.startsWith("luci-i18n-base-")) langs += n.substring(15)
+            db = PkgDb(available, installed, langs)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -164,6 +166,7 @@ fun PackageManagerPage(ctx: PageContext) {
     }
 
     fun displayNow() { shownFilter = filter }
+    val pattern = remember(shownFilter) { filterPattern(shownFilter) }
 
     val pageRows: List<PkgRow> = remember(rows, offset, sort) {
         val all = rows ?: return@remember emptyList()
@@ -235,7 +238,6 @@ fun PackageManagerPage(ctx: PageContext) {
                     if (all.isEmpty()) {
                         item(key = "placeholder") { Placeholder(filter) { filter = ""; displayNow() } }
                     } else {
-                        val pattern = filterPattern(shownFilter)
                         items(pageRows, key = { it.name }) { row ->
                             PackageRowItem(row, pattern) { openRow(row) }
                         }

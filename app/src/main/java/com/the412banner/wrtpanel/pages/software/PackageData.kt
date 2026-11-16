@@ -1,11 +1,11 @@
 package com.the412banner.wrtpanel.pages.software
 
-import com.the412banner.wrtpanel.core.JsonCodec
-import com.the412banner.wrtpanel.core.arr
-import com.the412banner.wrtpanel.core.get
-import com.the412banner.wrtpanel.core.long
-import com.the412banner.wrtpanel.core.obj
-import com.the412banner.wrtpanel.core.str
+import android.util.JsonReader
+import android.util.JsonToken
+import java.io.BufferedInputStream
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.Reader
 import java.text.Collator
 import java.util.Locale
 
@@ -96,21 +96,54 @@ internal fun parseList(s: String, dest: PkgList) {
     }
 }
 
-/** `apk query --format json` output. */
-internal fun parseApkQueryJson(s: String, dest: PkgList) {
-    val raw = runCatching { JsonCodec.parseToJsonElement(s) }.getOrNull().arr ?: return
-    for (item in raw) {
-        val o = item.obj ?: continue
-        val name = o["name"].str ?: continue
-        val pkg = Pkg(name)
-        pkg.size = o["file-size"].long
-        pkg.version = o["version"].str
-        pkg.description = o["description"].str
-        pkg.depends = o["depends"].arr?.mapNotNull { it.str }
-        pkg.provides = o["provides"].arr?.mapNotNull { it.str }
-        pkg.status = o["status"].arr?.mapNotNull { it.str }
-        dest.pkgs[name] = pkg
-        val provides = listOf(name) + (pkg.provides ?: emptyList())
+/** `apk query --format json` output, read as a stream; only the fields package-manager.js uses are kept. */
+internal fun parseApkQueryJson(reader: Reader, dest: PkgList) {
+    val items = ArrayList<Pkg>()
+    try {
+        val r = JsonReader(reader)
+        r.isLenient = true
+        if (r.peek() != JsonToken.BEGIN_ARRAY) return
+        r.beginArray()
+        while (r.hasNext()) {
+            if (r.peek() != JsonToken.BEGIN_OBJECT) { r.skipValue(); continue }
+            r.beginObject()
+            var name: String? = null
+            var version: String? = null
+            var description: String? = null
+            var size: Long? = null
+            var depends: List<String>? = null
+            var provides: List<String>? = null
+            var status: List<String>? = null
+            while (r.hasNext()) {
+                when (r.nextName()) {
+                    "name" -> name = jsonString(r)
+                    "version" -> version = jsonString(r)
+                    "description" -> description = jsonString(r)
+                    "file-size" -> size = jsonString(r)?.toDoubleOrNull()?.toLong()
+                    "depends" -> depends = jsonStringList(r)
+                    "provides" -> provides = jsonStringList(r)
+                    "status" -> status = jsonStringList(r)
+                    else -> r.skipValue()
+                }
+            }
+            r.endObject()
+            val pkg = Pkg(name ?: continue)
+            pkg.version = version
+            pkg.description = description
+            pkg.size = size
+            pkg.depends = depends
+            pkg.provides = provides
+            pkg.status = status
+            items += pkg
+        }
+        r.endArray()
+    } catch (e: Exception) {
+        // JSON.parse() failed: no packages, like the view.
+        return
+    }
+    for (pkg in items) {
+        dest.pkgs[pkg.name] = pkg
+        val provides = listOf(pkg.name) + (pkg.provides ?: emptyList())
         for (p0 in provides) {
             val p = p0.substringBefore('=')
             val l = dest.providers.getOrPut(p) { mutableListOf() }
@@ -119,9 +152,36 @@ internal fun parseApkQueryJson(s: String, dest: PkgList) {
     }
 }
 
-internal fun parsePackageData(s: String?, dest: PkgList) {
-    if (s.isNullOrEmpty()) return
-    if (s.trim().firstOrNull() == '[') parseApkQueryJson(s, dest) else parseList(s, dest)
+private fun jsonString(r: JsonReader): String? = when (r.peek()) {
+    JsonToken.STRING, JsonToken.NUMBER -> r.nextString()
+    JsonToken.BOOLEAN -> r.nextBoolean().toString()
+    JsonToken.NULL -> { r.nextNull(); null }
+    else -> { r.skipValue(); null }
+}
+
+private fun jsonStringList(r: JsonReader): List<String>? {
+    if (r.peek() != JsonToken.BEGIN_ARRAY) { r.skipValue(); return null }
+    val out = ArrayList<String>()
+    r.beginArray()
+    while (r.hasNext()) jsonString(r)?.let { out += it }
+    r.endArray()
+    return out
+}
+
+/** parsePackageData(): JSON (apk) when the output starts with '[', else opkg control lists. */
+internal fun parsePackageData(input: InputStream, dest: PkgList) {
+    val buf = BufferedInputStream(input, 64 * 1024)
+    buf.mark(8192)
+    var first = -1
+    for (i in 0 until 8192) {
+        val b = buf.read()
+        if (b < 0) break
+        if (!Character.isWhitespace(b)) { first = b; break }
+    }
+    buf.reset()
+    if (first < 0) return
+    if (first == '['.code) parseApkQueryJson(InputStreamReader(buf, Charsets.UTF_8), dest)
+    else parseList(buf.readBytes().decodeToString(), dest)
 }
 
 private val nonDigits = Regex("[^0-9]+")
