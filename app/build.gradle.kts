@@ -20,6 +20,7 @@ android {
         versionName = "0.1.0"
         buildConfigField("String", "GIT_SHA", "\"$gitSha\"")
         buildConfigField("String", "UPDATE_REPO", "\"The412Banner/WrtPanel\"")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -96,5 +97,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:core-ktx:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
 }

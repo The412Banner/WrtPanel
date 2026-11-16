@@ -176,6 +176,9 @@ fun MainScreen(vm: AppViewModel, session: RouterSession) {
             }
         }
     }
+    LaunchedEffect(vm.openRequest) {
+        vm.openRequest?.let { navigator.open(it); vm.openRequest = null }
+    }
     BackHandler(enabled = drawer.isOpen || history.isNotEmpty()) {
         if (drawer.isOpen) scope.launch { drawer.close() } else navigator.back()
     }

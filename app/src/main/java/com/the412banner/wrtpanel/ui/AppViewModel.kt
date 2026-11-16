@@ -43,6 +43,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var checkingUpdate by mutableStateOf(false)
         private set
+    /** A menu path to open (deep links, notification actions, instrumented tests). */
+    var openRequest by mutableStateOf<String?>(null)
 
     init {
         if (settings.autoUpdateCheck && System.currentTimeMillis() - settings.lastUpdateCheck > 6 * 3600_000L) checkForUpdate(false)
