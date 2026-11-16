@@ -1,10 +1,9 @@
 package com.the412banner.wrtpanel
 
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
@@ -60,13 +59,15 @@ class ScreenTourTest {
         sh("mkdir -p $outDir")
         check(waitText("Add router", 30_000)) { screenshot("no-add-router"); "Add router not shown: $lastError" }
         screenshot("routers-empty")
-        rule.onNodeWithText("Add router").performClick()
-        check(waitText("Save & connect", 10_000)) { "router dialog not shown" }
-        rule.onNode(hasSetTextAction() and hasText("Address")).performTextReplacement(url)
-        rule.onNode(hasSetTextAction() and hasText("Name (optional)")).performTextReplacement("CI router")
-        rule.onNode(hasSetTextAction() and hasText("Password")).performTextReplacement(password)
+        rule.onAllNodesWithText("Add router", useUnmergedTree = true)[0].performClick()
+        check(waitText("Save & connect", 10_000)) { "router dialog not shown: $lastError" }
+        // Field order in the dialog: Address, Name, Username, Password.
+        val fields = rule.onAllNodes(hasSetTextAction(), useUnmergedTree = true)
+        fields[0].performTextReplacement(url)
+        fields[1].performTextReplacement("CI router")
+        fields[3].performTextReplacement(password)
         screenshot("router-add")
-        rule.onNodeWithText("Save & connect").performClick()
+        rule.onAllNodesWithText("Save & connect", useUnmergedTree = true)[0].performClick()
         if (!waitText("Unsaved Changes", 1) && !waitText("Overview", 90_000)) {
             screenshot("login-failed"); error("login failed")
         }

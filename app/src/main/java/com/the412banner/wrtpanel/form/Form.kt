@@ -166,11 +166,13 @@ abstract class FormOption(val section: FormSection, val option: String, var titl
     /** Also run [validate] on an empty optional value (ui.js calls the validator for empty input too). */
     var validateEmpty = false
     var cfgvalueFn: ((rt: FormRuntime, sid: String) -> Any?)? = null
+    /** Default computed from other values (form.js o.defaults / updateDefaultValue); overrides [default]. */
+    var defaultFn: ((rt: FormRuntime, sid: String) -> Any?)? = null
+    /** Placeholder computed at render time (views that set placeholders in render/validate). */
+    var placeholderFn: ((rt: FormRuntime, sid: String) -> String?)? = null
     var writeFn: ((rt: FormRuntime, sid: String, value: Any) -> Unit)? = null
     var removeFn: ((rt: FormRuntime, sid: String) -> Unit)? = null
     var textvalueFn: ((rt: FormRuntime, sid: String) -> String?)? = null
-    /** Default that depends on other values (form.js o.defaults / updateDefaultValue); null = [default]. */
-    var defaultFn: ((rt: FormRuntime, sid: String) -> Any?)? = null
     /** Async per-option load (LuCI o.load overrides that fetch data): runs during map load. */
     var loadFn: (suspend PageContext.(rt: FormRuntime) -> Unit)? = null
     /** Visible but greyed out while this returns true. */

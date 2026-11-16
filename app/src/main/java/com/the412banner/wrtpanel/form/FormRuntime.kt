@@ -58,7 +58,9 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
     }
 
     /** The option's default for [sid]: [FormOption.defaultFn] when set, else [FormOption.default]. */
-    fun defaultOf(o: FormOption, sid: String): Any? = o.defaultFn?.invoke(this, sid) ?: o.default
+    fun defaultOf(o: FormOption, sid: String): Any? = o.defaultFn?.let { it(this, sid) } ?: o.default
+
+    fun placeholder(o: FormOption, sid: String): String? = o.placeholderFn?.let { it(this, sid) } ?: o.placeholder
 
     fun formString(o: FormOption, sid: String): String = when (val v = formvalue(o, sid)) {
         null -> ""
