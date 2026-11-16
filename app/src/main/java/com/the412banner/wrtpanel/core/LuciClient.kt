@@ -200,6 +200,21 @@ class LuciClient(val router: Router) {
         return callWithRetry(false) { e -> rpcBatch(e, calls) }
     }
 
+    /** JSON-RPC "list" (rpc.js rpc.list): all object names, or the method signatures of [objects]. */
+    suspend fun list(vararg objects: String): JsonElement? = callWithRetry(false) { e ->
+        val body = jsonOf(
+            "jsonrpc" to "2.0", "id" to rpcId.getAndIncrement(), "method" to "list",
+            "params" to if (objects.isEmpty()) null else objects.toList(),
+        )
+        val reply = postRpc(e, body, false)
+        val err = reply["error"]
+        if (err != null) {
+            if (err["code"].int == -32002) throw SessionExpiredException()
+            throw LuciException(err["message"].str ?: "RPC error")
+        }
+        reply["result"]
+    }
+
     private suspend fun <T> callWithRetry(slow: Boolean, block: suspend (LuciEnv) -> T): T {
         val e = ensureLogin()
         return try {
