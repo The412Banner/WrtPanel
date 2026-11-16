@@ -78,6 +78,8 @@ class FormSection(
     var cfgsectionsOverride: ((UciStore) -> List<String>)? = null
     /** Called after a section was added (LuCI handleAdd overrides): may set defaults. */
     var onAdd: ((rt: FormRuntime, sid: String) -> Unit)? = null
+    /** Called before a section is removed (LuCI handleRemove overrides), e.g. to remove references. */
+    var onRemove: ((rt: FormRuntime, sid: String) -> Unit)? = null
     /** Name validation for named adds (renderSectionAdd validators); null = uciname. */
     var addNameValidator: ((String) -> String?)? = null
     /** For named adds: offered choices instead of free text. */
@@ -171,6 +173,8 @@ abstract class FormOption(val section: FormSection, val option: String, var titl
     var loadFn: (suspend PageContext.(rt: FormRuntime) -> Unit)? = null
     /** Visible but greyed out while this returns true. */
     var disabledFn: ((rt: FormRuntime, sid: String) -> Boolean)? = null
+    /** LuCI o.tooltip: a hint shown with the field when it returns non-null. */
+    var tooltip: ((rt: FormRuntime, sid: String) -> String?)? = null
     /** Value change hook (onchange in LuCI). */
     var onChange: ((rt: FormRuntime, sid: String, value: Any?) -> Unit)? = null
     /** Custom widget (LuCI renderWidget overrides); replaces the default field UI. */

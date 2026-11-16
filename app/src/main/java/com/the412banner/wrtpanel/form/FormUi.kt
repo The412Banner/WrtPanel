@@ -540,6 +540,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
                 Column(Modifier.weight(1f).padding(end = 12.dp)) {
                     Text(title ?: o.option, style = MaterialTheme.typography.bodyLarge)
                     if (!desc.isNullOrBlank() && !compact) Text(htmlToAnnotated(desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    o.tooltip?.invoke(rt, sid)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary) }
                 }
                 Switch(checked = checked, onCheckedChange = { rt.setValue(o, sid, if (it) o.enabled else o.disabled) }, enabled = !disabled)
             }
