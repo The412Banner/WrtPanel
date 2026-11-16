@@ -2,6 +2,23 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — Device test on the Pocket FIT (feat/app 2edf78c, DEVICE-TESTED, user approved the install)
+
+**Installed:** /sdcard/Download/WrtPanel-full-2edf78c2.apk via `pm install -r` (user said yes 04:0x EST); installed
+base.apk sha256 ea30fd56… == staged == CI artifact (build 43820583824). Peer session root-56 told before/after.
+**Test router (127.0.0.1:8088, writes allowed):** add router + login OK; Overview, System › System OK; changed
+Description → Save & Apply → countdown from 90 s → "Configuration changes applied."; committed config has
+`description 'WrtPanel device test'`. The 4 staged changes are LuCI-identical behaviour (defaults cronloglevel=7 and
+zram_comp_algo=lzo written, enable_server=0 removed because it equals the Flag default).
+**Real router 192.168.1.216 (read-only, no save/apply):** login OK; Overview with real data (System, Memory, Storage
+incl. /mnt/14TB-HDD 96 % and /mnt/Seagate-5TB, Port status lan1 1 GbE, Network upstream DHCP 192.168.1.216/24,
+DHCP leases, Wireless radio0/radio1 disabled); Network Shares (lan+wan, WORKGROUP, "Nighthawk NAS"); Interfaces
+(lan 122.94 GB RX); Software (7529 available packages, disk 6 % used). No WrtPanel entries in the crash buffer.
+**UI notes:** dark theme follows the system; drawer + tabs + save bar look right on 1080×1920 @345 dpi.
+**Open / not tested on device:** Apply unchecked / rollback path, package install/remove, firmware flash, reboot,
+wireless pages with active radios, HTTPS + certificate pinning, the in-app updater (no release exists yet).
+**Next (needs the user):** merge feat/app → main, and a first release (pre-release) so the updater has something to read.
+
 ## 2026-11-16 — Full app on the emulator tour (feat/app 2edf78c, CI-green, emulator-tested, NOT device-tested)
 
 **All 8 groups merged** (interfaces 1e0b1cc3 → 890343f; conflicts: duplicate defaultFn → kept one).
