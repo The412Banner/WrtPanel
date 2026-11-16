@@ -147,7 +147,9 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         }
         val empty = values.isEmpty() || values.all { it.isEmpty() }
         if (empty) {
-            return if (o.optional || o.rmempty) null else "Expecting: non-empty value"
+            if (!(o.optional || o.rmempty)) return "Expecting: non-empty value"
+            if (o.validateEmpty) o.validate?.invoke(this, sid, "")?.let { return it }
+            return null
         }
         val dt = o.datatype
         if (dt != null && o !is ListValueOption) {

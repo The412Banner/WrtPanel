@@ -238,8 +238,9 @@ fun SectionView(rt: FormRuntime, s: FormSection, parentSid: String? = null) {
 private fun TypedSectionView(rt: FormRuntime, s: FormSection, parentSid: String?) {
     val sids = if (parentSid != null) rt.sectionIdsFor(s, parentSid) else rt.cfgsections(s)
     val ro = rt.map.readonly || rt.ctx.readonly
+    val sTitle = if (s.hidetitle) null else s.title
     if (s.kind == SectionKind.Named && sids.isEmpty()) {
-        SectionCard(title = s.title?.let(::stripHtml), description = s.description?.let(::stripHtml)) {
+        SectionCard(title = sTitle?.let(::stripHtml), description = s.description?.let(::stripHtml)) {
             if (s.addremove && !ro) {
                 Text("This section contains no values yet", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(8.dp))
@@ -250,7 +251,7 @@ private fun TypedSectionView(rt: FormRuntime, s: FormSection, parentSid: String?
     }
     val single = sids.size == 1 && (s.kind == SectionKind.Named || !s.addremove)
     if (sids.isEmpty()) {
-        SectionCard(title = s.title?.let(::stripHtml), description = s.description?.let(::stripHtml)) {
+        SectionCard(title = sTitle?.let(::stripHtml), description = s.description?.let(::stripHtml)) {
             EmptyState(s.placeholder ?: "This section contains no values yet")
             if (s.addremove && !ro) AddSectionRow(rt, s)
         }
@@ -259,25 +260,25 @@ private fun TypedSectionView(rt: FormRuntime, s: FormSection, parentSid: String?
     if (single) {
         val sid = sids.first()
         SectionCard(
-            title = s.title?.let(::stripHtml),
+            title = sTitle?.let(::stripHtml),
             description = if (s.nodescriptions) null else s.description?.let(::stripHtml),
             actions = {
-                if (s.addremove && !ro) IconButton(onClick = { rt.removeSection(s, sid) }) { Icon(Icons.Outlined.Delete, "Delete") }
+                if (s.addremove && !ro && s.noDelete?.invoke(sid) != true) IconButton(onClick = { rt.removeSection(s, sid) }) { Icon(Icons.Outlined.Delete, "Delete") }
             },
         ) { SectionBody(rt, s, sid) }
         if (s.addremove && !ro && s.kind != SectionKind.Named) AddSectionRow(rt, s)
         return
     }
-    if (s.title != null || s.description != null) PageHeaderSmall(s.title, s.description)
+    if (sTitle != null || s.description != null) PageHeaderSmall(sTitle, s.description)
     sids.forEachIndexed { idx, sid ->
         SectionCard(
-            title = rt.sectionTitle(s, sid),
+            title = rt.sectionTitle(s, sid)?.takeIf { it.isNotEmpty() },
             actions = {
                 if (s.sortable && !ro) {
                     IconButton(onClick = { rt.moveSection(s, sid, true) }, enabled = idx > 0) { Icon(Icons.Outlined.ArrowUpward, "Move up") }
                     IconButton(onClick = { rt.moveSection(s, sid, false) }, enabled = idx < sids.size - 1) { Icon(Icons.Outlined.ArrowDownward, "Move down") }
                 }
-                if (s.addremove && !ro) IconButton(onClick = { rt.removeSection(s, sid) }) { Icon(Icons.Outlined.Delete, "Delete") }
+                if (s.addremove && !ro && s.noDelete?.invoke(sid) != true) IconButton(onClick = { rt.removeSection(s, sid) }) { Icon(Icons.Outlined.Delete, "Delete") }
             },
         ) { SectionBody(rt, s, sid) }
     }
@@ -341,6 +342,7 @@ private fun AddSectionRow(rt: FormRuntime, s: FormSection) {
             } else {
                 OutlinedTextField(
                     value = name, onValueChange = { name = it; err = null }, singleLine = true, label = { Text("New section name") },
+                    placeholder = s.addNamePlaceholder?.let { { Text(it) } },
                     isError = err != null, supportingText = err?.let { { Text(it) } }, modifier = Modifier.weight(1f),
                 )
             }
@@ -468,6 +470,7 @@ private fun GridAddRow(rt: FormRuntime, s: FormSection, onAdded: (String) -> Uni
             if (choices != null) SelectField(name, choices, "Name", { name = it }, Modifier.weight(1f))
             else OutlinedTextField(
                 value = name, onValueChange = { name = it; err = null }, singleLine = true, label = { Text("Name") },
+                placeholder = s.addNamePlaceholder?.let { { Text(it) } },
                 isError = err != null, supportingText = err?.let { { Text(it) } }, modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
