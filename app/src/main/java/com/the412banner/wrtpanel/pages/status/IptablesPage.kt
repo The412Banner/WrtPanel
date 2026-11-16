@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryTabRow
@@ -97,7 +98,7 @@ private fun parseIptablesDump(s: String): IDump {
 }
 
 /** Status › Firewall (iptables) — port of luci-mod-status view/status/iptables.js. */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun IptablesPage(ctx: PageContext) {
     var hasIp6 by remember { mutableStateOf<Boolean?>(null) }

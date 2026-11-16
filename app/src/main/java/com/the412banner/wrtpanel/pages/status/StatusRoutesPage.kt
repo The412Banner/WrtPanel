@@ -1,6 +1,7 @@
 package com.the412banner.wrtpanel.pages.status
 
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
@@ -272,6 +273,7 @@ private fun loadRoutesJson(networks: List<JsonElement>, out: List<String>, macs:
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RoutingView(ctx: PageContext, json: Boolean) {
     var data by remember { mutableStateOf<RoutesData?>(null) }

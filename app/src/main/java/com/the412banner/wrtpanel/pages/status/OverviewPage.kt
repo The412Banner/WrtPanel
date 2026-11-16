@@ -36,7 +36,7 @@ import kotlinx.coroutines.delay
 /** What an include's Content can use. */
 internal class OverviewEnv(val ctx: PageContext, val tooltip: MutableTooltip, val repoll: () -> Unit)
 
-/** A view/status/include/*.js module: title, load() + render() (null = nothing to show) and its content. */
+/** A module of view/status/include: title, load() + render() (null = nothing to show) and its content. */
 internal abstract class StatusInclude(val title: String) {
     /** load() then render(); returns null when render() returns null, throws when load() rejects. */
     abstract suspend fun fetch(ctx: PageContext, net: NetState): Any?
