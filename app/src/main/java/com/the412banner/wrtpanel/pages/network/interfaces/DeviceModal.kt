@@ -686,6 +686,7 @@ fun portStatusText(d: NetDevice): String {
 @Composable
 private fun BridgeVlanTable(ctx: PageContext, page: IfPage, rt: FormRuntime, s: FormSection, ss: FormSection, sid: String, st: DeviceDialogState) {
     rt.revision.intValue
+    page.model.version
     val ro = rt.map.readonly || ctx.readonly
     val sids = rt.cfgsections(ss)
     val ports = portOptions(ss)
