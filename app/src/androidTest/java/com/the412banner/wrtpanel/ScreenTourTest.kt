@@ -43,7 +43,7 @@ class ScreenTourTest {
     /** Dismisses system "isn't responding" dialogs that slow CI emulators show. */
     private fun dismissSystemDialogs() {
         for (label in listOf("Wait", "Close app", "OK")) {
-            device.findObject(By.text(label).pkg("android"))?.click()
+            runCatching { device.findObject(By.text(label).pkg("android"))?.click() }
         }
     }
 

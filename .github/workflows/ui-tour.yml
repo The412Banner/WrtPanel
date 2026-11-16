@@ -39,10 +39,11 @@ jobs:
       - name: Run the tour on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 34
-          target: google_apis
+          api-level: 33
+          target: aosp_atd
           arch: x86_64
           profile: pixel_6
+          channel: canary
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |

@@ -202,7 +202,7 @@ private fun WelcomeCard(gateway: String?, onAdd: (String?) -> Unit) {
             Spacer(Modifier.height(12.dp))
             Text("Manage your OpenWrt router", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
             Text(
-                "Sign in with the same user and password as the LuCI web interface. Every page and setting of the router is available here.",
+                "Sign in with the same user and password as the LuCI web interface.",
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onPrimaryContainer,
                 modifier = Modifier.padding(top = 6.dp),
             )

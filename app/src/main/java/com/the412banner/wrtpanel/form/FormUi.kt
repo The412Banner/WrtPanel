@@ -407,7 +407,7 @@ private fun GridRow(
                 if (title != null) Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     cols.forEach { o ->
-                        if (o.editable && !ro && rt.isActive(o, sid)) return@forEach
+                        if ((o.editable || s.kind == SectionKind.Table) && o !is DummyValueOption && !ro && rt.isActive(o, sid)) return@forEach
                         if (!rt.isActive(o, sid) && o !is DummyValueOption) return@forEach
                         val t = rt.textvalue(o, sid)
                         if (t.isEmpty() && o.title == null) return@forEach
@@ -420,7 +420,7 @@ private fun GridRow(
             }
             RowMenu(rt, s, sid, idx, count, ro, onEdit)
         }
-        cols.filter { it.editable && !ro && rt.isActive(it, sid) }.forEach { o ->
+        cols.filter { (it.editable || s.kind == SectionKind.Table) && it !is DummyValueOption && !ro && rt.isActive(it, sid) }.forEach { o ->
             Box(Modifier.padding(top = 6.dp)) { OptionField(rt, o, sid, compact = true) }
         }
     }
