@@ -691,6 +691,7 @@ private fun BridgeVlanTable(ctx: PageContext, page: IfPage, rt: FormRuntime, s: 
     val ports = portOptions(ss)
     val vlanOpt = ss.options.first { it.option == "vlan" }
     val localOpt = ss.options.first { it.option == "local" }
+    val report = LocalModalMessage.current
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (sids.isEmpty()) EmptyState("This section contains no values yet")
         sids.forEach { bsid ->
@@ -714,7 +715,7 @@ private fun BridgeVlanTable(ctx: PageContext, page: IfPage, rt: FormRuntime, s: 
         }
         if (!ro) FilledTonalButton(onClick = {
             val err = rt.parseSection(s, listOf(sid), modal = true)
-            if (err != null) { ctx.toast(err); return@FilledTonalButton }
+            if (err != null) { report(err); return@FilledTonalButton }
             val device = rt.uci.getString("network", sid, "name") ?: return@FilledTonalButton
             var maxVid = 0
             for (b in rt.cfgsections(ss)) { val v = rt.uci.getString("network", b, "vlan")?.toIntOrNull() ?: 0; if (v > maxVid) maxVid = v }

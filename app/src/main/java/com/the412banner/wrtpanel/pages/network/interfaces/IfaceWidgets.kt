@@ -53,6 +53,9 @@ import com.the412banner.wrtpanel.form.ListValueOption
 import com.the412banner.wrtpanel.ui.components.htmlToAnnotated
 import com.the412banner.wrtpanel.ui.components.stripHtml
 
+/** Shows a message inside the open dialog (the page's snackbar is hidden behind dialogs). */
+val LocalModalMessage = androidx.compose.runtime.staticCompositionLocalOf<(String) -> Unit> { {} }
+
 /** Error shown under a field: a parse error, or the live validation result once edited. */
 fun fieldError(rt: FormRuntime, o: FormOption, sid: String): String? =
     rt.error(o, sid) ?: if (rt.isEdited(o, sid)) rt.validateField(o, sid) else null

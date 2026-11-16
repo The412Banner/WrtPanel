@@ -551,6 +551,7 @@ private fun DhcpTab(ctx: PageContext, rt: FormRuntime, s: FormSection, ss: FormS
     rt.revision.intValue
     val sids = rt.sectionIdsFor(ss, sid)
     val scope = rememberCoroutineScope()
+    val report = LocalModalMessage.current
     if (sids.isEmpty()) {
         SectionCard {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -558,7 +559,7 @@ private fun DhcpTab(ctx: PageContext, rt: FormRuntime, s: FormSection, ss: FormS
                 if (!(rt.map.readonly || ctx.readonly)) FilledTonalButton(onClick = {
                     scope.launch {
                         try {
-                            rt.parseSection(s, listOf(sid), modal = true)?.let { ctx.toast(it); return@launch }
+                            rt.parseSection(s, listOf(sid), modal = true)?.let { report(it); return@launch }
                             rt.uci.add("dhcp", "dhcp", sid)
                             rt.uci.set("dhcp", sid, "interface", sid)
                             if (protoval == "static") {
@@ -570,7 +571,7 @@ private fun DhcpTab(ctx: PageContext, rt: FormRuntime, s: FormSection, ss: FormS
                             rt.uci.save()
                             rt.clearEdits()
                             ctx.session.changes.afterSave()
-                        } catch (e: Exception) { ctx.toast(e.message ?: e.toString()) }
+                        } catch (e: Exception) { report(e.message ?: e.toString()) }
                     }
                 }) { Icon(Icons.Outlined.Add, null); Spacer(Modifier.width(6.dp)); Text("Set up DHCP Server") }
             }

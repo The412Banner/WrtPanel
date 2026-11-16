@@ -44,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -593,6 +594,8 @@ private fun ModalScaffold(
     onConfirm: () -> Unit,
     dismissLabel: String = "Dismiss",
     confirmEnabled: Boolean = true,
+    message: String? = null,
+    onMessage: (String?) -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
@@ -607,7 +610,15 @@ private fun ModalScaffold(
         ) { pad ->
             Box(Modifier.fillMaxSize().padding(pad), contentAlignment = Alignment.TopCenter) {
                 Column(Modifier.widthIn(max = 920.dp).fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(16.dp)) {
-                    content()
+                    if (message != null) {
+                        Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.errorContainer, modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                            Row(Modifier.padding(start = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Text(message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onErrorContainer, modifier = Modifier.weight(1f).padding(vertical = 10.dp))
+                                IconButton(onClick = { onMessage(null) }) { Icon(Icons.Outlined.Close, "Dismiss", tint = MaterialTheme.colorScheme.onErrorContainer) }
+                            }
+                        }
+                    }
+                    CompositionLocalProvider(LocalModalMessage provides { m: String -> onMessage(m) }) { content() }
                     Spacer(Modifier.height(48.dp))
                 }
             }
@@ -623,6 +634,7 @@ private fun InterfaceEditor(page: IfPage, sid: String, onClose: () -> Unit) {
     var buildKey by remember(sid) { mutableIntStateOf(0) }
     val form = remember(sid) { mutableStateOf<ModalForm?>(null) }
     var error by remember(sid) { mutableStateOf<String?>(null) }
+    var msg by remember(sid) { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     LaunchedEffect(sid, buildKey) {
         form.value = null
@@ -630,8 +642,8 @@ private fun InterfaceEditor(page: IfPage, sid: String, onClose: () -> Unit) {
             form.value = buildInterfaceModal(ctx, page, sid) {
                 val f = form.value ?: return@buildInterfaceModal
                 val err = try { f.rt.saveModal(f.section, sid) } catch (e: Exception) { e.message ?: e.toString() }
-                if (err != null) ctx.toast(err)
-                else { runCatching { page.model.load(full = false) }; buildKey++ }
+                if (err != null) msg = err
+                else { msg = null; runCatching { page.model.load(full = false) }; buildKey++ }
             }
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
@@ -640,6 +652,8 @@ private fun InterfaceEditor(page: IfPage, sid: String, onClose: () -> Unit) {
     val ro = page.map.readonly || ctx.readonly
     ModalScaffold(
         title = "Interfaces » $sid",
+        message = msg,
+        onMessage = { msg = it },
         onDismiss = {
             form.value?.rt?.clearEdits()
             val device = if (ctx.uci.getString("network", sid, "type") == "bridge") "br-$sid" else null
@@ -654,7 +668,7 @@ private fun InterfaceEditor(page: IfPage, sid: String, onClose: () -> Unit) {
                 saving = true
                 val err = try { f.rt.saveModal(f.section, sid) } catch (e: Exception) { e.message ?: e.toString() }
                 saving = false
-                if (err != null) ctx.toast(err) else { onClose(); runCatching { page.model.load(full = false) } }
+                if (err != null) msg = err else { onClose(); runCatching { page.model.load(full = false) } }
             }
         },
     ) {
@@ -674,6 +688,7 @@ private fun DeviceEditor(page: IfPage, sid0: String, added: Boolean, onClose: ()
     val scope = rememberCoroutineScope()
     val form = remember(sid0) { mutableStateOf<Pair<ModalForm, DeviceDialogState>?>(null) }
     var error by remember(sid0) { mutableStateOf<String?>(null) }
+    var msg by remember(sid0) { mutableStateOf<String?>(null) }
     var tick by remember { mutableIntStateOf(0) }
     var saving by remember { mutableStateOf(false) }
     LaunchedEffect(sid0, tick) {
@@ -683,6 +698,8 @@ private fun DeviceEditor(page: IfPage, sid0: String, added: Boolean, onClose: ()
     val f = form.value
     ModalScaffold(
         title = f?.let { it.first.section.modalTitle?.invoke(it.first.sid) } ?: "Add device configuration",
+        message = msg,
+        onMessage = { msg = it },
         onDismiss = {
             f?.let { (mf, st) ->
                 mf.rt.clearEdits()
@@ -705,7 +722,7 @@ private fun DeviceEditor(page: IfPage, sid0: String, added: Boolean, onClose: ()
                 saving = true
                 val err = try { mf.rt.saveModal(mf.section, mf.sid) } catch (e: Exception) { e.message ?: e.toString() }
                 saving = false
-                if (err != null) ctx.toast(err) else { onClose(); runCatching { page.model.load(full = false) } }
+                if (err != null) msg = err else { onClose(); runCatching { page.model.load(full = false) } }
             }
         },
     ) {
@@ -724,12 +741,15 @@ private fun AddInterfaceDialog(page: IfPage, onDismiss: () -> Unit, onCreated: (
     val scope = rememberCoroutineScope()
     val form = remember { buildAddInterface(ctx, page.model) }
     var busy by remember { mutableStateOf(false) }
+    var msg by remember { mutableStateOf<String?>(null) }
     ModalScaffold(
         title = "Add new interface...",
         onDismiss = onDismiss,
         dismissLabel = "Cancel",
         confirmLabel = "Create interface",
         confirmEnabled = !busy,
+        message = msg,
+        onMessage = { msg = it },
         onConfirm = {
             val rt = form.rt
             rt.setValue(form.name, "_new_", rt.formString(form.name, "_new_"))
@@ -745,12 +765,12 @@ private fun AddInterfaceDialog(page: IfPage, onDismiss: () -> Unit, onCreated: (
                         ctx.uci.set("network", nameval, "proto", protoval)
                         page.model.instantiateNetwork(nameval, protoval).addDevice(devval)
                     }
-                    if (err != null) ctx.toast(err)
+                    if (err != null) msg = err
                     else {
                         runCatching { page.model.load(full = false) }
                         onCreated(nameval)
                     }
-                } catch (e: Exception) { ctx.toast(e.message ?: e.toString()) }
+                } catch (e: Exception) { msg = e.message ?: e.toString() }
                 busy = false
             }
         },
