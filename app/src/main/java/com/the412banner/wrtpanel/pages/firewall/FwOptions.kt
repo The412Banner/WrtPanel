@@ -153,7 +153,7 @@ private val numProto = Regex("^(0x[0-9a-f]{1,2}|[0-9]{1,3})$")
 
 private fun protoKey(v: String): String {
     val m = numProto.find(v)
-    val p = FwTool.lookupProto(if (m != null) FwTool.jsNumber(m.groupValues[1]).toLong() else v)!!
+    val p = FwTool.lookupProto(if (m != null) FwTool.jsNumber(m.groupValues[1]).toLong() else v) ?: return v
     return if (p.num > -1) p.name else p.label
 }
 
@@ -163,7 +163,7 @@ fun FormSection.protoSelect(name: String, title: String, tab: String, default: S
     o.default = default
     o.create = true
     fun rawValues(rt: FormRuntime, sid: String): List<String> =
-        FwTool.toArray(rt.uci.get(FW, sid, name) ?: default).map { FwTool.jsString(it) }.sorted()
+        FwTool.toArray(rt.uci.get(FW, sid, name) ?: default).map { FwTool.jsString(it) }.filter { it.isNotEmpty() }.sorted()
     o.cfgvalueFn = { rt, sid ->
         val raw = rawValues(rt, sid)
         if (raw.size == 1 && raw[0] in setOf("*", "any", "all")) listOf("all") else raw.map(::protoKey).sorted()
@@ -177,8 +177,7 @@ fun FormSection.protoSelect(name: String, title: String, tab: String, default: S
                 "tcpudp" -> { add("tcp", "TCP"); add("udp", "UDP") }
                 else -> {
                     val m = numProto.find(v)
-                    val p = FwTool.lookupProto(if (m != null) FwTool.jsNumber(m.groupValues[1]).toLong() else v)!!
-                    add(p.name, p.label)
+                    FwTool.lookupProto(if (m != null) FwTool.jsNumber(m.groupValues[1]).toLong() else v)?.let { p -> add(p.name, p.label) }
                 }
             }
         }
@@ -187,7 +186,7 @@ fun FormSection.protoSelect(name: String, title: String, tab: String, default: S
     val check: (String) -> String? = { v ->
         if (v == "all") null else {
             val m = numProto.find(v)
-            if (if (m != null) FwTool.jsNumber(m.groupValues[1]) > 255 else FwTool.lookupProto(v)!!.num == -1) "Unrecognized protocol" else null
+            if (if (m != null) FwTool.jsNumber(m.groupValues[1]) > 255 else (FwTool.lookupProto(v)?.num ?: -1) == -1) "Unrecognized protocol" else null
         }
     }
     o.validate = { _, _, v -> check(v) }

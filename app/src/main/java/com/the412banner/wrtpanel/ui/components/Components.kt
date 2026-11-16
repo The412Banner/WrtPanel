@@ -127,7 +127,8 @@ fun PageHeader(title: String?, description: String?) {
         if (title != null) Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         if (!description.isNullOrBlank()) {
             Text(
-                description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                htmlToAnnotated(description.replace(Regex("(<br\\s*/?>\\s*)+$", RegexOption.IGNORE_CASE), "")),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }

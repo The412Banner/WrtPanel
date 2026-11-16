@@ -32,8 +32,8 @@ object FwText {
     }
 
     private fun protoList(get: (String) -> Any?, withTypes: Boolean): List<Map<String, Any?>> =
-        toArray(get("proto")).filter { it != "*" && it != "any" && it != "all" }.map { p ->
-            val pr = FwTool.lookupProto(p)!!
+        toArray(get("proto")).filter { it != "*" && it != "any" && it != "all" }.mapNotNull { p ->
+            val pr = FwTool.lookupProto(p) ?: return@mapNotNull null
             if (withTypes) mapOf("num" to pr.num, "name" to pr.label, "types" to if (pr.num == 1 || pr.num == 58) toArray(get("icmp_type")) else null)
             else mapOf("num" to pr.num, "name" to pr.label)
         }
