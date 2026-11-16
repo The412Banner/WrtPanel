@@ -427,7 +427,8 @@ internal suspend fun loadWifiState(ctx: PageContext): WifiState {
 /** The poll of wireless.js: state, networks and the association lists. */
 internal suspend fun loadWifiSnapshot(ctx: PageContext): WifiSnapshot {
     val st = loadWifiState(ctx)
-    val radios = st.radioList().sortedBy { it.name }
+    // radios.sort((a, b) => a.getName() > b.getName()) never returns < 0, so V8 keeps the config order.
+    val radios = st.radioList()
     val nets = st.netList()
     val calls = ArrayList<UbusCall>()
     val owners = ArrayList<Triple<WifiNet, WifiVlan?, WifiRadio?>>()

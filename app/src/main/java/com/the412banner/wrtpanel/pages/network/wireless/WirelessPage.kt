@@ -300,12 +300,14 @@ private fun RadioCard(
             }
         }
         FlowRow(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            OutlinedButton(onClick = onRestart, enabled = !ro && !rowBusy) {
-                if (restarting) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)) }
-                Text("Restart")
+            Tip("Restart radio interface") {
+                OutlinedButton(onClick = onRestart, enabled = !ro && !rowBusy) {
+                    if (restarting) { CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp); Spacer(Modifier.width(8.dp)) }
+                    Text("Restart")
+                }
             }
-            Button(onClick = onScan, enabled = !ro && !rowBusy) { Text("Scan") }
-            FilledTonalButton(onClick = onAdd, enabled = !ro && !rowBusy) { Text("Add") }
+            Tip("Find and join network") { Button(onClick = onScan, enabled = !ro && !rowBusy) { Text("Scan") } }
+            Tip("Provide new network") { FilledTonalButton(onClick = onAdd, enabled = !ro && !rowBusy) { Text("Add") } }
         }
         nets.forEach { net ->
             HorizontalDivider(Modifier.padding(vertical = 10.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
@@ -361,14 +363,29 @@ private fun NetRow(
             SelectionContainer(Modifier.weight(1f)) { Text(networkStatus(net, pending), style = MaterialTheme.typography.bodyMedium) }
         }
         FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)) {
-            OutlinedButton(onClick = { onToggle(net.name) }, enabled = !ro && !busy) { Text(if (disabled) "Enable" else "Disable") }
-            Button(onClick = { onEdit(net.name) }, enabled = !busy) { Text("Edit") }
-            OutlinedButton(
-                onClick = { onRemove(net.name) }, enabled = !ro && !busy,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            ) { Text("Remove") }
+            Tip(if (disabled) "Enable this network" else "Disable this network") {
+                OutlinedButton(onClick = { onToggle(net.name) }, enabled = !ro && !busy) { Text(if (disabled) "Enable" else "Disable") }
+            }
+            Tip("Edit this network") { Button(onClick = { onEdit(net.name) }, enabled = !busy) { Text("Edit") } }
+            Tip("Delete this network") {
+                OutlinedButton(
+                    onClick = { onRemove(net.name) }, enabled = !ro && !busy,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                ) { Text("Remove") }
+            }
         }
     }
+}
+
+/** An HTML title attribute: shown on long press. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+private fun Tip(text: String, content: @Composable () -> Unit) {
+    androidx.compose.material3.TooltipBox(
+        positionProvider = androidx.compose.material3.TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = { androidx.compose.material3.PlainTooltip { Text(text) } },
+        state = androidx.compose.material3.rememberTooltipState(),
+    ) { content() }
 }
 
 // ---------------------------------------------------------------- associated stations
