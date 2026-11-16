@@ -138,6 +138,15 @@ class LuciClient(val router: Router) {
         }
     }
 
+    /** A response read completely on the IO dispatcher (never read bodies on the caller's thread). */
+    class Buffered(val code: Int, val headers: okhttp3.Headers, val text: String) {
+        fun header(name: String): String? = headers[name]
+    }
+
+    private suspend fun fetch(req: Request, slow: Boolean = false): Buffered = withContext(Dispatchers.IO) {
+        execute(req, slow).use { Buffered(it.code, it.headers, it.body?.string().orEmpty()) }
+    }
+
     /** Logs in through the LuCI login form and reads L.env (token, apply timings) from the first page. */
     suspend fun login(): LuciEnv = loginMutex.withLock { doLogin() }
 
@@ -146,11 +155,10 @@ class LuciClient(val router: Router) {
             .add("luci_username", router.username)
             .add("luci_password", router.password)
             .build()
-        val resp = execute(Request.Builder().url(url("/cgi-bin/luci/")).post(form).build())
+        val resp = fetch(Request.Builder().url(url("/cgi-bin/luci/")).post(form).build())
         val code = resp.code
-        val setCookie = resp.headers("Set-Cookie")
-        val body = resp.body?.string().orEmpty()
-        resp.close()
+        val setCookie = resp.headers.values("Set-Cookie")
+        val body = resp.text
         val sid = setCookie.firstNotNullOfOrNull { Regex("sysauth(?:_https?)?=([0-9a-fA-F]{16,})").find(it)?.groupValues?.get(1) }
         if (sid == null) {
             if (code == 403 || body.contains("luci_password")) throw AuthException("Invalid username and/or password")
@@ -162,10 +170,9 @@ class LuciClient(val router: Router) {
         var html = ""
         for (hop in 0 until 6) {
             val target = if (location.startsWith("http")) location else url(location)
-            val r = execute(Request.Builder().url(target).header("Cookie", "$cookieName=$sid").get().build())
+            val r = fetch(Request.Builder().url(target).header("Cookie", "$cookieName=$sid").get().build())
             val loc = r.header("Location")
-            html = r.body?.string().orEmpty()
-            r.close()
+            html = r.text
             if (r.code in 300..399 && loc != null) location = loc else break
         }
         val parsed = parseEnv(html, sid)
@@ -178,7 +185,7 @@ class LuciClient(val router: Router) {
     suspend fun logout() {
         val e = env ?: return
         runCatching {
-            execute(Request.Builder().url(luciUrl("admin", "logout")).header("Cookie", cookieHeader()).get().build()).close()
+            fetch(Request.Builder().url(luciUrl("admin", "logout")).header("Cookie", cookieHeader()).get().build())
         }
         if (env === e) env = null
     }
@@ -245,10 +252,9 @@ class LuciClient(val router: Router) {
             .url(url(e.ubusPath))
             .post(payload.toString().toRequestBody(JSON_TYPE))
             .build()
-        val resp = execute(req, slow)
-        val text = resp.body?.string().orEmpty()
+        val resp = fetch(req, slow)
+        val text = resp.text
         val code = resp.code
-        resp.close()
         if (code == 403 || code == 401) throw SessionExpiredException()
         if (code !in 200..299) throw LuciException("ubus HTTP $code")
         return runCatching { JsonCodec.parseToJsonElement(text) }.getOrElse { throw LuciException("Invalid ubus reply") }
@@ -292,10 +298,8 @@ class LuciClient(val router: Router) {
     /** GET a LuCI dispatcher path (e.g. admin/menu) with the session cookie. */
     suspend fun dispatcherGet(vararg parts: String): Pair<Int, String> {
         val e = ensureLogin()
-        val r = execute(Request.Builder().url(luciUrl(*parts)).header("Cookie", "$cookieName=${e.sessionId}").get().build())
-        val text = r.body?.string().orEmpty()
-        r.close()
-        return r.code to text
+        val r = fetch(Request.Builder().url(luciUrl(*parts)).header("Cookie", "$cookieName=${e.sessionId}").get().build())
+        return r.code to r.text
     }
 
     /** POST to a LuCI dispatcher path with sid + token form fields, as ui.js does for admin/uci/... */
@@ -307,12 +311,11 @@ class LuciClient(val router: Router) {
         val b = Request.Builder().url(luciUrl(path)).post(fb.build())
         if (e != null) b.header("Cookie", "$cookieName=${e.sessionId}")
         val client = if (timeoutMs != null) http.newBuilder().callTimeout(timeoutMs, TimeUnit.MILLISECONDS).build() else http
-        val r = withContext(Dispatchers.IO) {
-            try { client.newCall(b.build()).execute() } catch (x: IOException) { throw LuciException(x.message ?: "Network error", x) }
+        return withContext(Dispatchers.IO) {
+            try {
+                client.newCall(b.build()).execute().use { r -> r.code to r.body?.string().orEmpty() }
+            } catch (x: IOException) { throw LuciException(x.message ?: "Network error", x) }
         }
-        val text = r.body?.string().orEmpty()
-        r.close()
-        return r.code to text
     }
 
     suspend fun menu(): JsonObject {
@@ -329,9 +332,8 @@ class LuciClient(val router: Router) {
             .addFormDataPart("filename", remotePath)
         if (mode != null) mb.addFormDataPart("filemode", mode)
         mb.addFormDataPart("filedata", fileName, data)
-        val r = execute(Request.Builder().url(url("/cgi-bin/cgi-upload")).post(mb.build()).build(), slow = true)
-        val text = r.body?.string().orEmpty()
-        r.close()
+        val r = fetch(Request.Builder().url(url("/cgi-bin/cgi-upload")).post(mb.build()).build(), slow = true)
+        val text = r.text
         if (r.code != 200) throw LuciException("Upload failed (HTTP ${r.code}): ${text.take(200)}")
         return runCatching { JsonCodec.parseToJsonElement(text) }.getOrNull()
     }
@@ -341,7 +343,7 @@ class LuciClient(val router: Router) {
         val e = ensureLogin()
         val form = FormBody.Builder().add("sessionid", e.sessionId).add("path", remotePath).add("filename", fileName).build()
         val r = execute(Request.Builder().url(url("/cgi-bin/cgi-download")).post(form).build(), slow = true)
-        if (r.code != 200) { val t = r.body?.string(); r.close(); throw LuciException("Download failed (HTTP ${r.code}) ${t?.take(120) ?: ""}") }
+        if (r.code != 200) { val t = withContext(Dispatchers.IO) { r.use { it.body?.string() } }; throw LuciException("Download failed (HTTP ${r.code}) ${t?.take(120) ?: ""}") }
         return r to (r.body?.byteStream() ?: throw LuciException("Empty download"))
     }
 
@@ -351,7 +353,7 @@ class LuciClient(val router: Router) {
         val fb = FormBody.Builder().add("sessionid", e.sessionId)
         fields.forEach { (k, v) -> fb.add(k, v) }
         val r = execute(Request.Builder().url(url("/cgi-bin/$helper")).post(fb.build()).build(), slow = true)
-        if (r.code != 200) { val t = r.body?.string(); r.close(); throw LuciException("$helper failed (HTTP ${r.code}) ${t?.take(120) ?: ""}") }
+        if (r.code != 200) { val t = withContext(Dispatchers.IO) { r.use { it.body?.string() } }; throw LuciException("$helper failed (HTTP ${r.code}) ${t?.take(120) ?: ""}") }
         return r to (r.body?.byteStream() ?: throw LuciException("Empty reply"))
     }
 
