@@ -168,8 +168,7 @@ fun InfoTable(rows: List<Pair<String, String?>>) {
 @Composable
 fun UsageBar(label: String, fraction: Float, text: String) {
     val f by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(600), label = "usage")
-    val s = LocalStatusColors.current
-    val color = when { fraction > 0.9f -> s.bad; fraction > 0.75f -> s.warn; else -> MaterialTheme.colorScheme.primary }
+    val color = MaterialTheme.colorScheme.primary
     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Row(Modifier.fillMaxWidth()) {
             Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))

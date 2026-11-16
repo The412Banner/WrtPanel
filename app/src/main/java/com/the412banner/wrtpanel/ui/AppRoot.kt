@@ -61,13 +61,19 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppRoot(vm: AppViewModel) {
     AnimatedContent(
-        targetState = vm.session,
+        targetState = vm.session to vm.showSettings,
         transitionSpec = { fadeIn(tween(260)) togetherWith fadeOut(tween(160)) },
         label = "root",
-    ) { s ->
-        if (s == null) RoutersScreen(vm) else MainScreen(vm, s)
+    ) { (s, settings) ->
+        when {
+            settings -> {
+                androidx.activity.compose.BackHandler { vm.showSettings = false }
+                SettingsScreen(vm) { vm.showSettings = false }
+            }
+            s == null -> RoutersScreen(vm)
+            else -> MainScreen(vm, s)
+        }
     }
-    if (vm.showSettings) SettingsScreen(vm) { vm.showSettings = false }
     if (vm.showUpdateRequested) UpdateDialog(vm) { vm.showUpdateRequested = false }
 }
 
@@ -75,7 +81,7 @@ fun AppRoot(vm: AppViewModel) {
 fun SettingsScreen(vm: AppViewModel, onClose: () -> Unit) {
     val s = vm.settings
     val context = LocalContext.current
-    Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+    run {
         Scaffold(topBar = {
             TopAppBar(
                 title = { Text("App settings") },

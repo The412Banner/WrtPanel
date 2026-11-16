@@ -83,7 +83,7 @@ class ScreenTourTest {
         }
         for (p in pages) {
             rule.runOnUiThread { vm().openRequest = p }
-            Thread.sleep(5000)
+            Thread.sleep(9000)
             screenshot(p.removePrefix("admin/"))
         }
         rule.runOnUiThread { vm().showSettings = true }
