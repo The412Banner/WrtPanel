@@ -39,15 +39,18 @@ jobs:
       - name: Run the tour on an emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
-          target: aosp_atd
+          api-level: 34
+          target: google_apis
           arch: x86_64
           profile: pixel_6
-          channel: canary
           disable-animations: false
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: |
             adb logcat -c || true
+            adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
+            adb shell settings put secure immersive_mode_confirmations confirmed || true
+            adb shell input keyevent 224 || true
+            adb shell wm dismiss-keyguard || true
             ./gradlew --no-daemon connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.routerUrl=http://10.0.2.2:8088 || echo TOUR_FAILED > tour-failed.txt
             mkdir -p tour/screens
             adb pull /data/local/tmp/wrtpanel-screens tour/screens || true
