@@ -54,8 +54,11 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         if (editedKeys[k] == true) return edits[k]
         val cv = cfgvalue(o, sid)
         if (cv != null) return if (o is MultiValueOption && o.asString && cv is String) UciStore.toArray(cv) else cv
-        return o.default
+        return defaultOf(o, sid)
     }
+
+    /** The option's default for [sid]: [FormOption.defaultFn] when set, else [FormOption.default]. */
+    fun defaultOf(o: FormOption, sid: String): Any? = o.defaultFn?.invoke(this, sid) ?: o.default
 
     fun formString(o: FormOption, sid: String): String = when (val v = formvalue(o, sid)) {
         null -> ""
@@ -141,7 +144,7 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
     fun validateField(o: FormOption, sid: String): String? {
         if (o is DummyValueOption || o is ButtonOption || o is SectionValueOption) return null
         val values: List<String> = when (o) {
-            is FlagOption -> return null
+            is FlagOption -> return o.validate?.invoke(this, sid, formString(o, sid).ifEmpty { defaultOf(o, sid)?.toString() ?: o.disabled })
             is DynamicListOption, is MultiValueOption -> formList(o, sid)
             else -> listOf(formString(o, sid))
         }
@@ -211,8 +214,10 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         val active = isActive(o, sid)
         if (o is FlagOption) {
             if (active) {
-                val fval = formString(o, sid).ifEmpty { o.default?.toString() ?: o.disabled }
-                if (fval == (o.default?.toString() ?: o.disabled) && (o.optional || o.rmempty)) remove(o, sid)
+                validateField(o, sid)?.let { err -> return "Option \"${o.title ?: o.option}\" contains an invalid input value. $err" }
+                val def = defaultOf(o, sid)?.toString() ?: o.disabled
+                val fval = formString(o, sid).ifEmpty { def }
+                if (fval == def && (o.optional || o.rmempty)) remove(o, sid)
                 else {
                     val cv = cfgvalue(o, sid)?.toString()
                     if (o.forcewrite || cv != fval) write(o, sid, fval)

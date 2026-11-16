@@ -215,6 +215,16 @@ class LuciClient(val router: Router) {
         reply["result"]
     }
 
+    /** ubus `list` of the named objects (rpc.js rpc.list): method signatures by object name. */
+    suspend fun list(objects: List<String>): JsonObject {
+        if (objects.isEmpty()) return EmptyJson
+        return callWithRetry(false) { e ->
+            val reply = postRpc(e, jsonOf("jsonrpc" to "2.0", "id" to rpcId.getAndIncrement(), "method" to "list", "params" to objects), false)
+            if (reply["error"]["code"].int == -32002) throw SessionExpiredException()
+            reply["result"].obj ?: EmptyJson
+        }
+    }
+
     private suspend fun <T> callWithRetry(slow: Boolean, block: suspend (LuciEnv) -> T): T {
         val e = ensureLogin()
         return try {
