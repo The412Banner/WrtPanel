@@ -142,7 +142,13 @@ internal class RealtimeGraph(private val lines: List<GraphLine?>, private val in
         var top = peak.fold(Double.NEGATIVE_INFINITY) { a, b -> max(a, b) }
         if (!lastTimestamp.isNaN()) timestamp = lastTimestamp
 
-        val size = floor(log2(top))
+        val size = when {
+            top.isNaN() || top < 0 -> Double.NaN
+            top == 0.0 -> Double.NEGATIVE_INFINITY
+            top.isInfinite() -> top
+            top < java.lang.Double.MIN_NORMAL -> floor(log2(top))
+            else -> Math.getExponent(top).toDouble()
+        }
         val div = 2.0.pow(size - (size % 10))
         val pod = top / div
         val mult = if (pod < 5) 2.0 else if (pod < 50) 10.0 else if (pod < 500) 100.0 else 1000.0

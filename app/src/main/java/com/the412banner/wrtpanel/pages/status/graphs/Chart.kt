@@ -25,6 +25,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +81,7 @@ private fun Path.smoothThrough(xs: FloatArray, ys: FloatArray, from: Int, to: In
     for (k in from until to) {
         val mx = (xs[k] + xs[k + 1]) / 2f
         val my = (ys[k] + ys[k + 1]) / 2f
-        quadraticBezierTo(xs[k], ys[k], mx, my)
+        quadraticTo(xs[k], ys[k], mx, my)
     }
     lineTo(xs[to], ys[to])
 }
@@ -105,12 +106,15 @@ internal fun RealtimeChart(
     val backdrop = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f)
     val shift = remember { Animatable(0f) }
     val scale = remember { Animatable(Float.NaN) }
+    val shown = remember { intArrayOf(-1) }
 
-    LaunchedEffect(frame.serial) {
+    LaunchedEffect(frame) {
         val target = frame.info?.scale?.toFloat() ?: Float.NaN
         val stepPx = with(density) { GRAPH_STEP.dp.toPx() }
-        if (target.isNaN() || scale.value.isNaN() || target <= 0f) scale.snapTo(target)
-        if (frame.added in 1..8) shift.snapTo(shift.value + frame.added * stepPx) else shift.snapTo(0f)
+        val first = shown[0] < 0
+        shown[0] = frame.serial
+        if (first || target.isNaN() || scale.value.isNaN() || target <= 0f) scale.snapTo(target)
+        if (!first && frame.added in 1..8) shift.snapTo(shift.value + frame.added * stepPx) else shift.snapTo(0f)
         kotlinx.coroutines.coroutineScope {
             if (!target.isNaN() && target > 0f && scale.value != target) {
                 launch { scale.animateTo(target, tween(700, easing = FastOutSlowInEasing)) }
@@ -237,7 +241,7 @@ internal fun GraphCard(
     val frame = graph.frame
     val info = frame.info
     SectionCard(contentPadding = PaddingValues(top = 10.dp, bottom = 6.dp)) {
-        RealtimeChart(frame, series, info?.let(labels), width)
+        key(graph) { RealtimeChart(frame, series, info?.let(labels), width) }
         Text(
             info?.caption() ?: "-", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
