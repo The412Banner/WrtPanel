@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.AltRoute
+import androidx.compose.material.icons.automirrored.outlined.AltRoute
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeviceHub
 import androidx.compose.material.icons.outlined.Lan
@@ -157,7 +157,7 @@ fun deviceIcon(type: String?): ImageVector = when (type) {
     "tunnel" -> Icons.Outlined.VpnLock
     "wireguard" -> Icons.Outlined.VpnKey
     "alias" -> Icons.Outlined.Link
-    "vrf" -> Icons.Outlined.AltRoute
+    "vrf" -> Icons.AutoMirrored.Outlined.AltRoute
     else -> Icons.Outlined.SettingsEthernet
 }
 
