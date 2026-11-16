@@ -12,7 +12,10 @@ Newest entry first. Times are US Eastern (EST).
   per rule: stable only on "stable"/"cut it"), published 04:34:58 EST; assets WrtPanel-v0.1.0-pre1.apk (2,411,712 B,
   sha256 d962c1c0…, v1/v2/v3 testkey verified) + SHA256SUMS.
 - The in-app updater only offers pre-releases with "Include test builds" on → turned on for the user's install.
-- Install of the release on the Pocket FIT waits for peer session root-56 (HINTControl screen test) to finish.
+- 04:47 EST installed the release on the Pocket FIT (user: "install and login to my router for me"): installed
+  base.apk sha256 d962c1c0… == release asset, versionCode 2 / 0.1.0-pre1, saved routers kept. Turned on "Include
+  test builds"; "Check now" read the GitHub releases → "WrtPanel is up to date". Logged in to Nighthawk NAS
+  (192.168.1.216) → Overview with live data; WrtPanel left open on it at the user's request. No crash entries.
 
 ## 2026-11-16 — Device test on the Pocket FIT (feat/app 2edf78c, DEVICE-TESTED, user approved the install)
 
