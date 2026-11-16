@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+
 package com.the412banner.wrtpanel.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -306,7 +309,7 @@ fun ResponsiveTable(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                        Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(Modifier.weight(1f)) {
                                     val t = row.getOrNull(primaryColumn).orEmpty()
@@ -315,15 +318,21 @@ fun ResponsiveTable(
                                 }
                                 if (rowActions != null) Row { rowActions(r) }
                             }
-                            row.forEachIndexed { c, t ->
-                                if (c == primaryColumn) return@forEachIndexed
-                                Row(Modifier.fillMaxWidth().padding(top = 4.dp)) {
-                                    Text(
-                                        headers.getOrNull(c).orEmpty(), style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.4f),
-                                    )
-                                    Box(Modifier.weight(0.6f)) {
-                                        if (cell != null) cell(r, c, t)
+                            // Secondary columns wrap side by side ("Label value") so cards stay short on phones.
+                            FlowRow(
+                                Modifier.fillMaxWidth().padding(top = 2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                row.forEachIndexed { c, t ->
+                                    if (c == primaryColumn) return@forEachIndexed
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            headers.getOrNull(c).orEmpty(), style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        if (cell != null) Box { cell(r, c, t) }
                                         else SelectionContainer { Text(t.ifEmpty { "-" }, style = MaterialTheme.typography.bodySmall) }
                                     }
                                 }

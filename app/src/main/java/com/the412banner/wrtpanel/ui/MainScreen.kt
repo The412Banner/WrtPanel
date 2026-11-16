@@ -290,6 +290,10 @@ private fun DrawerContent(
     onUpdate: () -> Unit,
 ) {
     val expanded = remember { mutableStateListOf<String>().apply { groups.firstOrNull { current.startsWith(it.path + "/") }?.let { add(it.path) } } }
+    // Opening a page elsewhere expands its group once; afterwards the user can collapse any group.
+    LaunchedEffect(current) {
+        groups.firstOrNull { current.startsWith(it.path + "/") }?.let { if (it.path !in expanded) expanded.add(it.path) }
+    }
     Column(Modifier.fillMaxHeight().verticalScroll(rememberScrollState()).padding(horizontal = 12.dp)) {
         Spacer(Modifier.height(16.dp))
         Surface(shape = MaterialTheme.shapes.large, color = MaterialTheme.colorScheme.primaryContainer, modifier = Modifier.fillMaxWidth()) {
@@ -305,7 +309,7 @@ private fun DrawerContent(
         }
         Spacer(Modifier.height(10.dp))
         groups.forEach { g ->
-            val open = g.path in expanded || current.startsWith(g.path + "/")
+            val open = g.path in expanded
             Row(
                 Modifier.fillMaxWidth().clickable { if (g.path in expanded) expanded.remove(g.path) else expanded.add(g.path) }.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
