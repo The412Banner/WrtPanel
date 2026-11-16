@@ -18,10 +18,14 @@ class PageRegistry {
 object Pages {
     private val registry = PageRegistry().apply {
         registerStatusPages(this)
+        registerStatusGraphPages(this)
         registerSystemPages(this)
-        registerNetworkPages(this)
-        registerFirewallPages(this)
+        registerSoftwarePages(this)
         registerServicesPages(this)
+        registerInterfacePages(this)
+        registerWirelessPages(this)
+        registerFirewallPages(this)
+        registerNetworkPages(this)
     }
 
     fun has(node: MenuNode?): Boolean = node != null && registry.pages.containsKey("${node.actionType}:${node.actionPath}")
