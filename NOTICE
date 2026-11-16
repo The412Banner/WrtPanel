@@ -1,0 +1,17 @@
+WrtPanel
+Copyright (C) 2026 The412Banner
+Licensed under the GNU General Public License v3.0 (see LICENSE).
+
+This product includes material ported from LuCI, the OpenWrt Configuration Interface:
+page structure, UCI option names, labels, help texts and the input validation rules
+(luci-base validation.js, form.js and ui.js behaviour, and the views of luci-mod-status,
+luci-mod-system, luci-mod-network, luci-app-firewall, luci-app-ksmbd and
+luci-app-package-manager).
+
+  LuCI - https://github.com/openwrt/luci
+  Copyright the LuCI contributors (Jo-Philipp Wich, Steven Barth and others)
+  Licensed under the Apache License, Version 2.0
+  http://www.apache.org/licenses/LICENSE-2.0
+
+OpenWrt is a registered trademark of Software Freedom Conservancy.
+WrtPanel is not affiliated with or endorsed by the OpenWrt project.
