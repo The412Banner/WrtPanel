@@ -124,10 +124,10 @@ fun SectionCard(
 fun PageHeader(title: String?, description: String?) {
     if (title == null && description == null) return
     Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
-        if (title != null) Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+        if (title != null) Text(stripHtml(title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
         if (!description.isNullOrBlank()) {
             Text(
-                description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                htmlToAnnotated(description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),
             )
         }
