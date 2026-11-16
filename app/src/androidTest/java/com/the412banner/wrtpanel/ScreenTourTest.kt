@@ -9,7 +9,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import com.the412banner.wrtpanel.ui.AppViewModel
 import com.the412banner.wrtpanel.ui.MenuNode
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -28,6 +28,35 @@ class ScreenTourTest {
         inst.uiAutomation.executeShellCommand(cmd).close()
     }
 
+    /** Writes the UI hierarchy to the shell-owned output dir (the app process cannot write there). */
+    private fun dump(name: String) {
+        runCatching {
+            val buf = java.io.ByteArrayOutputStream()
+            device.dumpWindowHierarchy(buf)
+            val fds = inst.uiAutomation.executeShellCommandRw("sh -c 'cat > $outDir/$name.xml'")
+            android.os.ParcelFileDescriptor.AutoCloseOutputStream(fds[1]).use { it.write(buf.toByteArray()) }
+            fds[0].close()
+            fds.getOrNull(2)?.close()
+        }
+    }
+
+    /** Dismisses system "isn't responding" dialogs that slow CI emulators show. */
+    private fun dismissSystemDialogs() {
+        for (label in listOf("Wait", "Close app", "OK")) {
+            device.findObject(By.text(label).pkg("android"))?.click()
+        }
+    }
+
+    private fun waitText(text: String, ms: Long): Boolean {
+        val end = System.currentTimeMillis() + ms
+        while (System.currentTimeMillis() < end) {
+            dismissSystemDialogs()
+            if (device.hasObject(By.text(text)) || device.hasObject(By.desc(text))) return true
+            Thread.sleep(500)
+        }
+        return false
+    }
+
     private fun screenshot(name: String) {
         Thread.sleep(400)
         val file = "%s/%03d-%s.png".format(outDir, shot++, name.replace(Regex("[^A-Za-z0-9._-]"), "_"))
@@ -41,9 +70,15 @@ class ScreenTourTest {
         val password = InstrumentationRegistry.getArguments().getString("routerPassword") ?: "wrtpanel"
         sh("mkdir -p $outDir")
         val scenario = ActivityScenario.launch(MainActivity::class.java)
-        assertNotNull(device.wait(Until.findObject(By.text("Add router")), 20_000))
+        device.waitForIdle(5000)
+        Thread.sleep(3000)
+        screenshot("start")
+        dump("start")
+        val found = waitText("Add router", 40_000)
+        if (!found) { screenshot("no-add-router"); dump("no-add-router") }
+        assertTrue("Add router not shown", found)
         screenshot("routers-empty")
-        device.findObject(By.text("Add router")).click()
+        (device.findObject(By.text("Add router")) ?: device.findObject(By.desc("Add router"))).click()
         device.wait(Until.hasObject(By.text("Save & connect")), 10_000)
         val fields = device.findObjects(By.clazz("android.widget.EditText"))
         fields[0].text = url
@@ -51,7 +86,9 @@ class ScreenTourTest {
         fields[3].text = password
         screenshot("router-add")
         device.findObject(By.text("Save & connect")).click()
-        assertNotNull("login failed", device.wait(Until.findObject(By.text("Overview")), 90_000))
+        val loggedIn = waitText("Overview", 90_000)
+        if (!loggedIn) { screenshot("login-failed"); dump("login-failed") }
+        assertTrue("login failed", loggedIn)
         Thread.sleep(4000)
         screenshot("overview")
 

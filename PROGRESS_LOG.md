@@ -72,5 +72,10 @@ daily WorkManager check + notification + PackageInstaller).
 
 ## Lessons learned (don't repeat these)
 
+- Agent worktrees live in `.claude/worktrees/` inside the repo: `git add -A` committed them as embedded
+  gitlinks (be415d5, pushed; removed in 8d45bca, `.claude/` now in .gitignore). Check `git status` before `add -A`.
+- apksigner `verify` skips v1 for minSdk >= 24 and prints "v1 … false" even when CERT.SF/RSA exist; verify
+  with `--min-sdk-version 21` (CI run 43810491817 failed only on this).
+
 - `pkill -f '<pattern>'` from a shell whose own command line contains the pattern kills that
   shell (11-16 00:0x: exit 144). Use bracket patterns like `'[u]httpd -f'`.
