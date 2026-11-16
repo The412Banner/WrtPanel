@@ -2,6 +2,18 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — Merged to main + released v0.1.0-pre1 (user: "merge and release")
+
+- Release cut 29331b10 on feat/app (versionName 0.1.0-pre1, versionCode 2, docs/release-notes/v0.1.0-pre1.md, README
+  status); CI build 43839205588 green. Diff vs the device-tested build 2edf78c: version strings, notes, README, log only.
+- Backup ref refs/backup/20261116/main-before-feat-app = 3da1bdac (pushed). main fast-forwarded 3da1bda → 29331b10;
+  tree f7da479e == feat/app.
+- Release workflow run 43840091320 (success): tag v0.1.0-pre1 → 29331b10 (== built commit), pre-release (not Latest,
+  per rule: stable only on "stable"/"cut it"), published 04:34:58 EST; assets WrtPanel-v0.1.0-pre1.apk (2,411,712 B,
+  sha256 d962c1c0…, v1/v2/v3 testkey verified) + SHA256SUMS.
+- The in-app updater only offers pre-releases with "Include test builds" on → turned on for the user's install.
+- Install of the release on the Pocket FIT waits for peer session root-56 (HINTControl screen test) to finish.
+
 ## 2026-11-16 — Device test on the Pocket FIT (feat/app 2edf78c, DEVICE-TESTED, user approved the install)
 
 **Installed:** /sdcard/Download/WrtPanel-full-2edf78c2.apk via `pm install -r` (user said yes 04:0x EST); installed
