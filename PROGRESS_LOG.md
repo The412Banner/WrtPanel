@@ -2,6 +2,19 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — v0.1.0-pre2 released (user: "publish pre2")
+
+- User report (screenshot 05:14 EST): the side-menu group of the current page could not be collapsed. Cause:
+  `open = path in expanded || current.startsWith(path)`. Fix c6921014 on fix/drawer-and-lists: groups follow only
+  `expanded`; opening a page elsewhere expands its group once. Also compact phone list cards (FlowRow of label/value).
+  CI 43847638719 green. Not device-tested before release (UI-only change).
+- Router entry in the app changed to http://nighthawk-nas (user asked; logged in OK, saved as root@nighthawk-nas).
+- Release cut 81eb3520 (versionName 0.1.0-pre2, versionCode 3, notes); CI 43850600296 green; backup
+  refs/backup/20261116/main-before-drawer-fix = 9a8ab117; main fast-forwarded to 81eb3520 (tree == branch).
+- Release run 43851514727: tag v0.1.0-pre2 → 81eb3520 (== built), pre-release, published 05:47:34 EST; APK
+  2,411,711 B, v1/v2/v3 verified; GitHub API lists pre2 first → the installed pre1 (test builds on) will offer it.
+  Not installed by me: the user updates through the app (tests the updater).
+
 ## 2026-11-16 — Merged to main + released v0.1.0-pre1 (user: "merge and release")
 
 - Release cut 29331b10 on feat/app (versionName 0.1.0-pre1, versionCode 2, docs/release-notes/v0.1.0-pre1.md, README
