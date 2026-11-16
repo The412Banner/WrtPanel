@@ -34,7 +34,18 @@ jobs:
           set -e
           BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
-          "$BT/apksigner" verify -v --print-certs "$APK" | tee verify.txt
+          # AGP may leave out the v1 (JAR) signature for minSdk >= 24; re-sign with all three then.
+          if ! unzip -l "$APK" | grep -qE 'META-INF/[^/]+\.(SF|RSA)$'; then
+            echo "no v1 signature from AGP, re-signing with apksigner (v1 + v2 + v3)"
+            "$BT/apksigner" sign --ks keystore/testkey.p12 --ks-type PKCS12 --ks-pass pass:android \
+              --ks-key-alias testkey --key-pass pass:android --min-sdk-version 21 \
+              --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
+              --out "$APK.signed" "$APK"
+            mv "$APK.signed" "$APK"
+          fi
+          unzip -l "$APK" | grep -E 'META-INF/[^/]+\.(SF|RSA)$'
+          # --min-sdk-version 21 makes apksigner verify v1 too (with minSdk 26 it would skip it).
+          "$BT/apksigner" verify -v --print-certs --min-sdk-version 21 "$APK" | tee verify.txt
           grep -q 'Verified using v1 scheme (JAR signing): true' verify.txt
           grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' verify.txt
           grep -q 'Verified using v3 scheme (APK Signature Scheme v3): true' verify.txt
