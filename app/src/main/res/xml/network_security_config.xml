@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Routers are reached by IP over plain HTTP or HTTPS with self-signed certificates.
+     Self-signed certificates are checked by WrtPanel's own fingerprint pinning (TrustStore.kt). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
