@@ -5,6 +5,8 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToLog
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.lifecycle.ViewModelProvider
@@ -39,17 +41,24 @@ class ScreenTourTest {
 
     private fun vm(): AppViewModel = ViewModelProvider(rule.activity)[AppViewModel::class.java]
 
+    private var lastError: String? = null
+
     private fun waitText(text: String, ms: Long): Boolean = try {
-        rule.waitUntil(ms) { rule.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+        rule.waitUntil(ms) { rule.onAllNodesWithText(text, substring = true, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
         true
-    } catch (e: Throwable) { false }
+    } catch (e: Throwable) {
+        lastError = e.toString()
+        android.util.Log.e("WRTPANEL-TOUR", "waitText($text) failed", e)
+        runCatching { rule.onRoot(useUnmergedTree = true).printToLog("WRTPANEL-TREE") }
+        false
+    }
 
     @Test
     fun tour() {
         val url = InstrumentationRegistry.getArguments().getString("routerUrl") ?: "http://10.0.2.2:8088"
         val password = InstrumentationRegistry.getArguments().getString("routerPassword") ?: "wrtpanel"
         sh("mkdir -p $outDir")
-        check(waitText("Add router", 30_000)) { screenshot("no-add-router"); "Add router not shown" }
+        check(waitText("Add router", 30_000)) { screenshot("no-add-router"); "Add router not shown: $lastError" }
         screenshot("routers-empty")
         rule.onNodeWithText("Add router").performClick()
         check(waitText("Save & connect", 10_000)) { "router dialog not shown" }
