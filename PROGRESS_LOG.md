@@ -2,6 +2,26 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — Page groups merged into feat/app (in progress)
+
+Merged with --no-ff after each branch's CI was green (CI-green only; nothing device-tested yet):
+- feat/pages-software a8ef4c8b (run 43814042856) → fecfbb61: Software (package manager, menu refresh after installs), Network Shares
+- feat/pages-system ba83cb3a (run 43813889982) → 17c01c1: Administration ×5, Startup, Scheduled Tasks, Mount Points, LEDs (+5 triggers), Backup/Flash, Reboot
+- feat/pages-dhcpdns 541f7ccb (run 43814670320) → 9cb8a6c: DHCP, DNS, Diagnostics (+ DnsRecordHandlers test vs LuCI JS output)
+- feat/pages-graphs 73253f20 (run 43815077436) → 28a3002: Realtime Load / Bandwidth / Wireless / Connections, Channel Analysis
+- feat/pages-status b8c60ce7 (run 43815843761) → 63d9301: Overview (all 8 includes), Routing (+json), nftables/iptables, System/Kernel Log
+- feat/pages-firewall 45799399 (run 43816111737) → 6b3bca4: Zones, Forwards, Rules, NAT, IP Sets, Custom (+ FwTool test vs LuCI JS output). Conflicts: duplicate `validateEmpty` + PageHeader change (both agents) → kept one copy.
+- feat/pages-wireless 3eac341e (run 43816385090) → 381fca3: Wireless incl. scan/join, WPS, QR (uqr port, MIT, NOTICE updated). Conflict: two `LuciClient.list()` overloads → kept both.
+- My fix afabc32: `hasFeature()` treated JSON null as present (found by the status agent).
+
+Agent deviations kept (decided by me): Reboot and "Remove network" ask for confirmation (LuCI doesn't); frequency widget
+only writes on change (protects routers without wifi hardware); copied LuCI quirks are listed in each merge's agent report.
+
+UI tour (emulator) status: app renders correctly (screenshots), but test automation could not find Compose nodes yet
+(UiAutomator, then Compose test API) — debugging with semantic-tree logging (run 43816376954).
+
+Open: feat/pages-interfaces (still running).
+
 ## 2026-11-16 — Pages in parallel (feat/app + 8 feat/pages-* branches, in progress)
 
 **Why:** ~35 LuCI pages (~18k lines of view JS) remain; split by page group so they can be built in parallel.
