@@ -161,6 +161,8 @@ abstract class FormOption(val section: FormSection, val option: String, var titl
     var writeFn: ((rt: FormRuntime, sid: String, value: Any) -> Unit)? = null
     var removeFn: ((rt: FormRuntime, sid: String) -> Unit)? = null
     var textvalueFn: ((rt: FormRuntime, sid: String) -> String?)? = null
+    /** Default that depends on other values (form.js o.defaults / updateDefaultValue); null = [default]. */
+    var defaultFn: ((rt: FormRuntime, sid: String) -> Any?)? = null
     /** Async per-option load (LuCI o.load overrides that fetch data): runs during map load. */
     var loadFn: (suspend PageContext.(rt: FormRuntime) -> Unit)? = null
     /** Visible but greyed out while this returns true. */
