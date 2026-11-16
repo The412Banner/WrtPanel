@@ -415,36 +415,36 @@ internal class Protocol(private val st: NetState, val sid: String, private val p
 }
 
 /** network.Device */
-internal class Device(private val st: NetState, device: String) {
+internal class Device(private val st: NetState, ifname: String) {
     val wif: WifiNetwork?
-    val name: String
+    val device: String
     val dev: JsonObject
     private val config: Map<String, Any>
 
     init {
-        val wsid = st.getWifiSidByIfname(device)
+        val wsid = st.getWifiSidByIfname(ifname)
         var d: String? = null
         wif = if (wsid != null) {
             val res = st.getWifiStateBySid(wsid)
             val netid = st.getWifiNetidBySid(wsid)
-            WifiNetwork(st, wsid, res?.first, res?.second, netid?.first, res?.third, jsonOf("ifname" to device)).also { d = it.getIfname() }
+            WifiNetwork(st, wsid, res?.first, res?.second, netid?.first, res?.third, jsonOf("ifname" to ifname)).also { d = it.getIfname() }
         } else null
-        name = d ?: device
-        dev = st.netdevs[name] ?: JsonObject(emptyMap())
-        config = st.uci.sections("network", "device").lastOrNull { it["name"] == device } ?: emptyMap()
+        device = d ?: ifname
+        dev = st.netdevs[device] ?: JsonObject(emptyMap())
+        config = st.uci.sections("network", "device").lastOrNull { it["name"] == ifname } ?: emptyMap()
     }
 
-    fun getName(): String = wif?.getIfname() ?: name
+    fun getName(): String = wif?.getIfname() ?: device
     fun getMAC(): String? = dev["mac"].str?.uppercase()
 
     fun getType(): String = when {
-        name.startsWith("@") -> "alias"
-        dev["devtype"].str == "wlan" || wif != null || st.isWifiIfname(name) -> "wifi"
-        dev["devtype"].str == "bridge" || st.isBridge.contains(name) -> "bridge"
+        device.startsWith("@") -> "alias"
+        dev["devtype"].str == "wlan" || wif != null || st.isWifiIfname(device) -> "wifi"
+        dev["devtype"].str == "bridge" || st.isBridge.contains(device) -> "bridge"
         dev["devtype"].str == "wireguard" -> "wireguard"
-        st.isTunnel.contains(name) -> "tunnel"
-        dev["devtype"].str == "vlan" || name.contains('.') -> "vlan"
-        dev["devtype"].str == "dsa" || st.isSwitch.contains(name) -> "switch"
+        st.isTunnel.contains(device) -> "tunnel"
+        dev["devtype"].str == "vlan" || device.contains('.') -> "vlan"
+        dev["devtype"].str == "dsa" || st.isSwitch.contains(device) -> "switch"
         config["type"] == "8021q" || config["type"] == "8021ad" -> "vlan"
         config["type"] == "bridge" -> "bridge"
         config["type"] == "vrf" -> "vrf"
@@ -456,8 +456,8 @@ internal class Device(private val st: NetState, device: String) {
         "wifi" -> "Wireless Adapter"
         "bridge" -> "Bridge"
         "vrf" -> "Virtual Routing and Forwarding (VRF)"
-        "switch" -> if (st.netdevs[name]?.get("devtype").str == "dsa") "Switch port" else "Ethernet Switch"
-        "vlan" -> if (st.isSwitch.contains(name)) "Switch VLAN" else "Software VLAN"
+        "switch" -> if (st.netdevs[device]?.get("devtype").str == "dsa") "Switch port" else "Ethernet Switch"
+        "vlan" -> if (st.isSwitch.contains(device)) "Switch VLAN" else "Software VLAN"
         "wireguard" -> "WireGuard Interface"
         "tunnel" -> "Tunnel Interface"
         else -> "Ethernet Adapter"

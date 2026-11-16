@@ -75,8 +75,9 @@ internal class DhcpInclude : StatusInclude("DHCP Leases") {
         val duidIaidStatic = mutableSetOf<String>()
         for (host in ctx.uci.sections("dhcp", "host")) {
             UciStore.toArray(host["mac"]).forEach { macStatic += it.lowercase() }
-            UciStore.toArray(host["duid"]).map { it.lowercase() }.forEach { d ->
-                when (d.split('%').size) { 1 -> duidStatic += d; 2 -> duidIaidStatic += d }
+            for (d in UciStore.toArray(host["duid"]).map { it.lowercase() }) {
+                val parts = d.split('%').size
+                if (parts == 1) duidStatic.add(d) else if (parts == 2) duidIaidStatic.add(d)
             }
         }
 

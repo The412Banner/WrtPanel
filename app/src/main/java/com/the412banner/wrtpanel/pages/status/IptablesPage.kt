@@ -87,7 +87,7 @@ private fun parseIptablesDump(s: String): IDump {
                     ""
                 }.ifEmpty { "-" }
                 val target = m.groupValues[4]
-                rules += IRule(m.groupValues[2].toLong(), m.groupValues[3].toLong(), target, m.groupValues[5], m.groupValues[7], m.groupValues[8], m.groupValues[9], m.groupValues[10], options, comment)
+                rules.add(IRule(m.groupValues[2].toLong(), m.groupValues[3].toLong(), target, m.groupValues[5], m.groupValues[7], m.groupValues[8], m.groupValues[9], m.groupValues[10], options, comment))
                 val c = cur
                 if (target.isNotEmpty() && c != null) refs.getOrPut(target) { mutableListOf() } += c.name to m.groupValues[1].toInt()
             }

@@ -93,7 +93,7 @@ internal class NetworkInclude : StatusInclude("Network") {
         items += "Connected" to (if (uptime > 0) LuciFmt.t(uptime) else null)
         var stats: List<Pair<String?, String?>>? = null
         if (ipv6 && ifc.getProtocol() == "dhcpv6" && dh6 != null && dev != null) {
-            val s = dh6[dev.name].obj
+            val s = dh6[dev.device].obj
             if (s != null) stats = s.entries.map { (k, v) -> k.replace("dhcp_", "DHCPv6 ") to "${LuciFmt.num(v.double ?: 0.0)} pkts" }
         }
         return UpstreamBox(

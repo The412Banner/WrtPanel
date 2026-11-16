@@ -59,7 +59,7 @@ private suspend fun retrieveDmesg(ctx: PageContext, f: DmesgFilter): String {
         val time = Regex("^\\[\\s*(\\d+(?:\\.\\d+)?)]").find(clean)?.groupValues?.get(1)?.toDoubleOrNull()
         val sev = Regex("^\\d+").find(tag)?.value?.toIntOrNull()
         if (!cont) last = sev
-        lines += KLine(if (cont) last else sev, cont, time, clean)
+        lines.add(KLine(if (cont) last else sev, cont, time, clean))
     }
     val start = f.from.trim().takeIf { it.isNotEmpty() }
     val end = f.to.trim().takeIf { it.isNotEmpty() }
