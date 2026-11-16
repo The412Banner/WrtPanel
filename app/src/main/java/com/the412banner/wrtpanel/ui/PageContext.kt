@@ -114,7 +114,12 @@ class RouterSession(val router: Router, val client: LuciClient) {
         cache.clear()
     }
 
-    fun hasFeature(name: String): Boolean = features[name] != null && features[name].bool != false
+    /** L.hasSystemFeature: present, not null and not false. */
+    fun hasFeature(name: String): Boolean {
+        val v = features[name] ?: return false
+        if (v is kotlinx.serialization.json.JsonNull) return false
+        return v.bool != false
+    }
 
     /** Installed ubus objects (LuCI's L.hasSystemFeature / rpc.list), cached. */
     suspend fun ubusObjects(): Set<String> {
