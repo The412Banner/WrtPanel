@@ -108,6 +108,7 @@ private data class ImageCheck(
 )
 
 /** System › Backup / Flash Firmware — port of luci-mod-system view/system/flash.js. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun FlashPage(ctx: PageContext) {
     var info by remember { mutableStateOf<FlashInfo?>(null) }

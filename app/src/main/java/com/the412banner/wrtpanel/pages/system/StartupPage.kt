@@ -57,6 +57,7 @@ import kotlinx.coroutines.launch
 private data class InitScript(val name: String, val start: Int, val enabled: Boolean)
 
 /** System › Startup — port of luci-mod-system view/system/startup.js. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun StartupPage(ctx: PageContext) {
     var inits by remember { mutableStateOf<List<InitScript>?>(null) }

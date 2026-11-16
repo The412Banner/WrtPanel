@@ -15,7 +15,7 @@ import com.the412banner.wrtpanel.ui.PageContext
 /** A view/system/led-trigger/<name>.js plugin. */
 private class LedTrigger(val name: String, val trigger: String, val description: String, val kernel: Boolean, val addFormOptions: FormSection.() -> Unit)
 
-/** The trigger plugins shipped with luci-mod-system (led-trigger/*.js). */
+/** The trigger plugins shipped with luci-mod-system (view/system/led-trigger). */
 private val ledTriggers = listOf(
     LedTrigger("default-on", "Always on (kernel: default-on)", "The LED is always in default state on.", true) {},
     LedTrigger(
