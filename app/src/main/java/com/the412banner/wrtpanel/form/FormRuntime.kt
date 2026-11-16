@@ -120,7 +120,7 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
     }
 
     private fun depEqual(v: Any?, expected: Any?): Boolean = when (expected) {
-        is Regex -> v != null && v !is List<*> && expected.containsMatchIn(v.toString())
+        is Regex -> v != null && expected.containsMatchIn(if (v is List<*>) v.joinToString(",") else v.toString())
         null -> v == null || v == "" || (v is List<*> && v.isEmpty())
         is Boolean -> (v?.toString() in setOf("1", "true", "yes", "on")) == expected
         is List<*> -> v is List<*> && v.map { it.toString() } == expected.map { it.toString() }
@@ -147,7 +147,8 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         }
         val empty = values.isEmpty() || values.all { it.isEmpty() }
         if (empty) {
-            return if (o.optional || o.rmempty) null else "Expecting: non-empty value"
+            if (!(o.optional || o.rmempty)) return "Expecting: non-empty value"
+            return if (o.validateEmpty) o.validate?.invoke(this, sid, "") else null
         }
         val dt = o.datatype
         if (dt != null && o !is ListValueOption) {
@@ -305,6 +306,7 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
     }
 
     fun removeSection(s: FormSection, sid: String) {
+        s.onRemove?.invoke(this, sid)
         uci.remove(s.config, sid)
         revision.intValue++
     }
