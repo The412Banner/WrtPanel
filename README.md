@@ -10,7 +10,8 @@ already signed in, so every menu entry of the router stays reachable.
 
 ## Status
 
-Work in progress. No release yet; test builds are GitHub Actions artifacts.
+Test builds are published as pre-releases (first: v0.1.0-pre1). Turn on "Include test builds" in
+App settings to get update notifications for them.
 
 ## Requirements
 
