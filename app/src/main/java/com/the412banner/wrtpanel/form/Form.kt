@@ -167,6 +167,8 @@ abstract class FormOption(val section: FormSection, val option: String, var titl
     var disabledFn: ((rt: FormRuntime, sid: String) -> Boolean)? = null
     /** Value change hook (onchange in LuCI). */
     var onChange: ((rt: FormRuntime, sid: String, value: Any?) -> Unit)? = null
+    /** Custom widget (LuCI renderWidget overrides); replaces the default field UI. */
+    var render: (@androidx.compose.runtime.Composable (rt: FormRuntime, sid: String) -> Unit)? = null
 
     fun depends(opt: String, value: Any?) { deps += Dep(mapOf(opt to value)) }
     fun depends(vararg conds: Pair<String, Any?>) { deps += Dep(conds.toMap()) }

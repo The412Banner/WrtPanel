@@ -524,6 +524,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
     val title = o.title?.let(::stripHtml)
     val desc = o.description
     val error = rt.error(o, sid) ?: liveError(rt, o, sid)
+    o.render?.let { custom -> custom(rt, sid); return }
     when (o) {
         is FlagOption -> {
             val checked = (rt.formString(o, sid).ifEmpty { o.default?.toString() ?: o.disabled }) == o.enabled
