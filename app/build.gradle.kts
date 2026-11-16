@@ -16,8 +16,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped only in a release-cut commit.
-        versionCode = 2
-        versionName = "0.1.0-pre1"
+        versionCode = 3
+        versionName = "0.1.0-pre2"
         buildConfigField("String", "GIT_SHA", "\"$gitSha\"")
         buildConfigField("String", "UPDATE_REPO", "\"The412Banner/WrtPanel\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
