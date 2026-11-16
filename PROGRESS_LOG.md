@@ -2,6 +2,22 @@
 
 Newest entry first. Times are US Eastern (EST).
 
+## 2026-11-16 — Full app on the emulator tour (feat/app 2edf78c, CI-green, emulator-tested, NOT device-tested)
+
+**All 8 groups merged** (interfaces 1e0b1cc3 → 890343f; conflicts: duplicate defaultFn → kept one).
+**UI tour** (ci/testrouter: official OpenWrt 25.12.6 x86-64 rootfs in Docker + replayed procd/netifd answers with
+generic data; emulator API 34 google_apis, launcher disabled; Compose test APIs through the unmerged tree):
+- run 43817364241 (e7d63c3): login + all 37 menu pages + settings opened, but most pages showed
+  NetworkOnMainThreadException: LuciClient read response bodies on the caller's (main) thread → fixed ebe645a
+  (every body read inside Dispatchers.IO; streams already read on IO in pages).
+- run 43819178432 (ebe645a): success, no WrtPanel crash; Overview (System/Memory/…), graphs with live data,
+  Interfaces/Wireless/DHCP/DNS/Firewall/Software/System pages render. Processes, System, Startup, Port Forwards were
+  still loading at the 5 s mark → tour waits 9 s per page (2edf78c).
+- Tour fixes on the way: UiAutomator could not see Compose nodes (switched to Compose test APIs), ATD image renders
+  black (back to google_apis), Pixel Launcher ANR dialogs (launcher disabled during the run).
+**Polish 2edf78c:** usage bars one colour like LuCI; App settings is a full screen (no grey status-bar band).
+**Staged:** /sdcard/Download/WrtPanel-full-e7d63c3e.apk (pre-fix build; replaced by the next staged build).
+
 ## 2026-11-16 — Page groups merged into feat/app (in progress)
 
 Merged with --no-ff after each branch's CI was green (CI-green only; nothing device-tested yet):
@@ -91,6 +107,11 @@ daily WorkManager check + notification + PackageInstaller).
 **Next:** first CI build, then the pages.
 
 ## Lessons learned (don't repeat these)
+
+- OkHttp: returning the Response from `withContext(IO)` and calling `body.string()` outside reads from the socket on
+  the caller's thread → NetworkOnMainThreadException for bodies not already buffered. Read the body inside IO.
+- UI tests: UiAutomator did not see the Compose tree on the CI emulator; Compose test finders need
+  `useUnmergedTree = true` for text inside buttons.
 
 - Agent worktrees live in `.claude/worktrees/` inside the repo: `git add -A` committed them as embedded
   gitlinks (be415d5, pushed; removed in 8d45bca, `.claude/` now in .gitignore). Check `git status` before `add -A`.
