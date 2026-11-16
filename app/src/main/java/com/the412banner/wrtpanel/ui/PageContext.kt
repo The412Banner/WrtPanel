@@ -1,7 +1,9 @@
 package com.the412banner.wrtpanel.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.the412banner.wrtpanel.core.ChangesManager
 import com.the412banner.wrtpanel.core.Fs
@@ -83,7 +85,8 @@ class RouterSession(val router: Router, val client: LuciClient) {
     val uci = UciStore(client)
     val fs = Fs(client)
     val changes = ChangesManager(client, uci)
-    var menu: MenuNode? = null
+    /** The router's menu; refreshed after installing or removing LuCI apps. */
+    var menu by mutableStateOf<MenuNode?>(null)
     var board: BoardInfo? = null
     /** luci getFeatures (e.g. "fw4", "hostapd": {...}). */
     var features: JsonObject = JsonObject(emptyMap())
@@ -102,6 +105,13 @@ class RouterSession(val router: Router, val client: LuciClient) {
         )
         features = client.callOrNull("luci", "getFeatures").obj ?: JsonObject(emptyMap())
         changes.refresh()
+    }
+
+    /** Reloads admin/menu (LuCI flushes its menu cache after package changes). */
+    suspend fun refreshMenu() {
+        runCatching { MenuNode.parse(client.menu()) }.getOrNull()?.let { menu = it }
+        features = client.callOrNull("luci", "getFeatures").obj ?: features
+        cache.clear()
     }
 
     fun hasFeature(name: String): Boolean = features[name] != null && features[name].bool != false

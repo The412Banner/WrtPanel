@@ -56,6 +56,13 @@ class UciStore(private val client: LuciClient) {
 
     suspend fun reload(vararg configs: String) { unload(*configs); load(*configs) }
 
+    /** Test hook: installs [values] (a `uci get` reply's "values") as loaded state for [conf]. */
+    internal fun seed(conf: String, values: JsonObject) { loaded[conf] = parseConfig(values); touch() }
+
+    /** Pending local edits as (creates, changes, deletes) for tests and diagnostics. */
+    internal fun pending(): Triple<Map<String, Map<String, Map<String, Any>>>, Map<String, Map<String, Map<String, Any>>>, Map<String, Map<String, Set<String>?>>> =
+        Triple(creates, changes, deletes)
+
     /** Forgets everything, like a fresh LuCI page load. */
     fun unloadAll() {
         loaded.clear(); creates.clear(); changes.clear(); deletes.clear(); order.clear(); touch()
