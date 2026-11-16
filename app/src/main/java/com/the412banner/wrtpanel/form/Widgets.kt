@@ -84,7 +84,7 @@ fun FormSection.zoneSelect(
 fun FormSection.networkSelect(
     name: String, title: String? = null, description: String? = null, tab: String? = null,
     multiple: Boolean = false, nocreate: Boolean = true, exclude: String? = null, novirtual: Boolean = false,
-    filter: ((String) -> Boolean)? = null,
+    filter: ((String) -> Boolean)? = null, loopback: Boolean = false,
     block: ChoiceOption.() -> Unit = {},
 ): ChoiceOption {
     val o: ChoiceOption = if (multiple) multi(name, title, description, tab) else list(name, title, description, tab)
@@ -92,7 +92,7 @@ fun FormSection.networkSelect(
         val nets = NetData.networks(this)
         o.clearChoices()
         if (!multiple && (o.rmempty || o.optional)) o.value("", "unspecified")
-        nets.filter { it != "loopback" && it != exclude && (filter?.invoke(it) ?: true) }.forEach { n ->
+        nets.filter { (loopback || it != "loopback") && it != exclude && (filter?.invoke(it) ?: true) }.forEach { n ->
             if (novirtual) {
                 val proto = uci.getString("network", n, "proto")
                 if (proto in setOf("6in4", "6rd", "6to4", "dslite", "gre", "gretap", "ipip", "ipip6", "map", "vti", "wireguard", "pptp", "l2tp", "openvpn")) return@forEach

@@ -82,6 +82,10 @@ class FormSection(
     var addNameValidator: ((String) -> String?)? = null
     /** For named adds: offered choices instead of free text. */
     var addNameChoices: List<Pair<String, String>>? = null
+    /** For named adds: placeholder of the name field. */
+    var addNamePlaceholder: String? = null
+    /** LuCI s.hidetitle: the title is only used as the tab label of a tabbed map. */
+    var hidetitle = false
     /** Shown when there are no sections ("This section contains no values yet"). */
     var placeholder: String? = null
     /** Section-level custom render below the options (e.g. status tables). */
@@ -157,6 +161,8 @@ abstract class FormOption(val section: FormSection, val option: String, var titl
     val deps = mutableListOf<Dep>()
     /** Custom validation like LuCI's o.validate: return null when OK, else the error text. */
     var validate: ((rt: FormRuntime, sid: String, value: String) -> String?)? = null
+    /** Also run [validate] on an empty optional value (ui.js calls the validator for empty input too). */
+    var validateEmpty = false
     var cfgvalueFn: ((rt: FormRuntime, sid: String) -> Any?)? = null
     var writeFn: ((rt: FormRuntime, sid: String, value: Any) -> Unit)? = null
     var removeFn: ((rt: FormRuntime, sid: String) -> Unit)? = null
