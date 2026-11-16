@@ -54,8 +54,12 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         if (editedKeys[k] == true) return edits[k]
         val cv = cfgvalue(o, sid)
         if (cv != null) return if (o is MultiValueOption && o.asString && cv is String) UciStore.toArray(cv) else cv
-        return o.default
+        return defaultOf(o, sid)
     }
+
+    fun defaultOf(o: FormOption, sid: String): Any? = o.defaultFn?.let { it(this, sid) } ?: o.default
+
+    fun placeholder(o: FormOption, sid: String): String? = o.placeholderFn?.let { it(this, sid) } ?: o.placeholder
 
     fun formString(o: FormOption, sid: String): String = when (val v = formvalue(o, sid)) {
         null -> ""
@@ -210,8 +214,9 @@ class FormRuntime(val map: FormMap, val ctx: PageContext) {
         val active = isActive(o, sid)
         if (o is FlagOption) {
             if (active) {
-                val fval = formString(o, sid).ifEmpty { o.default?.toString() ?: o.disabled }
-                if (fval == (o.default?.toString() ?: o.disabled) && (o.optional || o.rmempty)) remove(o, sid)
+                val def = defaultOf(o, sid)?.toString() ?: o.disabled
+                val fval = formString(o, sid).ifEmpty { def }
+                if (fval == def && (o.optional || o.rmempty)) remove(o, sid)
                 else {
                     val cv = cfgvalue(o, sid)?.toString()
                     if (o.forcewrite || cv != fval) write(o, sid, fval)

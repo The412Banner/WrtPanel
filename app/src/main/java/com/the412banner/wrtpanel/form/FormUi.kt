@@ -527,7 +527,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
     o.render?.let { custom -> custom(rt, sid); return }
     when (o) {
         is FlagOption -> {
-            val checked = (rt.formString(o, sid).ifEmpty { o.default?.toString() ?: o.disabled }) == o.enabled
+            val checked = (rt.formString(o, sid).ifEmpty { rt.defaultOf(o, sid)?.toString() ?: o.disabled }) == o.enabled
             Row(
                 Modifier.fillMaxWidth().clickable(enabled = !disabled, role = Role.Switch) {
                     rt.setValue(o, sid, if (checked) o.disabled else o.enabled)
@@ -566,7 +566,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
                 SelectField(
                     value = v, choices = choices, label = title, onChange = { rt.setValue(o, sid, it) },
                     enabled = !disabled, supporting = desc, error = error,
-                    placeholder = o.placeholder, optional = o.optional || o.rmempty, descriptions = o.choiceDescriptions,
+                    placeholder = rt.placeholder(o, sid), optional = o.optional || o.rmempty, descriptions = o.choiceDescriptions,
                 )
             }
         }
@@ -578,7 +578,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
                 label = title?.let { { Text(it) } }, enabled = !disabled, isError = error != null,
                 minLines = o.rows.coerceIn(2, 14), maxLines = 30,
                 textStyle = if (o.monospace) CodeStyle else MaterialTheme.typography.bodyLarge,
-                placeholder = o.placeholder?.let { { Text(it) } },
+                placeholder = rt.placeholder(o, sid)?.let { { Text(it) } },
                 supportingText = helpText(desc, error), modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -624,7 +624,7 @@ fun OptionField(rt: FormRuntime, o: FormOption, sid: String, compact: Boolean = 
             if (choices.isNotEmpty()) {
                 ComboField(
                     value = rt.formString(o, sid), choices = choices, label = title, onChange = { rt.setValue(o, sid, it) },
-                    enabled = !disabled, supporting = desc, error = error, placeholder = o.placeholder,
+                    enabled = !disabled, supporting = desc, error = error, placeholder = rt.placeholder(o, sid),
                     keyboard = keyboardFor(o.datatype),
                 )
             } else {
@@ -670,7 +670,7 @@ private fun TextField(rt: FormRuntime, o: FormOption, sid: String, title: String
         value = rt.formString(o, sid),
         onValueChange = { rt.setValue(o, sid, it) },
         label = title?.let { { Text(it) } },
-        placeholder = o.placeholder?.let { { Text(it) } },
+        placeholder = rt.placeholder(o, sid)?.let { { Text(it) } },
         enabled = !disabled,
         singleLine = true,
         isError = error != null,
@@ -820,7 +820,7 @@ private fun MultiSelectField(rt: FormRuntime, o: MultiValueOption, sid: String, 
                 }
             }
         }
-        if (selected.isEmpty() && o.placeholder != null) Text(o.placeholder!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (selected.isEmpty() && rt.placeholder(o, sid) != null) Text(rt.placeholder(o, sid)!!, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Help(desc, error)
     }
 }
@@ -856,11 +856,11 @@ private fun DynamicListField(rt: FormRuntime, o: DynamicListOption, sid: String,
                 Box(Modifier.weight(1f)) {
                     if (choices.isNotEmpty()) {
                         ComboField(input, choices.filter { it.first !in items }, null, { input = it; inputErr = null },
-                            error = inputErr, placeholder = o.placeholder ?: "Add value", keyboard = keyboardFor(o.datatype))
+                            error = inputErr, placeholder = rt.placeholder(o, sid) ?: "Add value", keyboard = keyboardFor(o.datatype))
                     } else {
                         OutlinedTextField(
                             value = input, onValueChange = { input = it; inputErr = null }, singleLine = true,
-                            placeholder = { Text(o.placeholder ?: "Add value") }, isError = inputErr != null,
+                            placeholder = { Text(rt.placeholder(o, sid) ?: "Add value") }, isError = inputErr != null,
                             supportingText = inputErr?.let { { Text(it) } }, keyboardOptions = keyboardFor(o.datatype),
                             modifier = Modifier.fillMaxWidth(),
                         )
